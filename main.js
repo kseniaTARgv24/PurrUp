@@ -1,5 +1,6 @@
-const { app, BrowserWindow } = require("electron");
-const path = require("path"); //для нахождения файлов
+const { app, BrowserWindow, ipcMain } = require("electron");
+const path = require("path");
+const { previewBackup, runBackup } = require("./backupEngine");
 
 let windows = {};
 
@@ -16,13 +17,11 @@ function createWindow(name, file, options = {}) {
     });
 
     windows[name].loadFile(path.join(__dirname, "renderer", file));
-
     windows[name].show();
 }
 
-
 function createAllWindows() {
-    createWindow("widget", "widget.html",{
+    createWindow("widget", "widget.html", {
         width: 300,
         height: 500,
         closable: true,
@@ -33,21 +32,23 @@ function createAllWindows() {
         movable: true,
         resizable: false,
         skipTaskbar: true
-    })
+    });
 
-    // createWindow("logs", "logs.html")
-    // createWindow("taskEditor", "taskEditor.html")
-    // createWindow("comparison", "comparison.html")
-    // createWindow("schedule", "schedule.html")
-    // createWindow("sync", "sync.html")
-    // createWindow("filter", "filter.html")
+    // createWindow("logs", "logs.html");
+    // createWindow("taskEditor", "taskEditor.html");
+    // createWindow("comparison", "comparison.html");
+    // createWindow("schedule", "schedule.html");
+    // createWindow("sync", "sync.html");
+    // createWindow("filter", "filter.html");
 }
 
-/////////////////////////////////////////
+ipcMain.handle("backup:preview", async (_event, config) => previewBackup(config));
+ipcMain.handle("backup:run", async (_event, config) => runBackup(config));
 
 app.whenReady().then(createAllWindows);
 
-//Quit the app when all windows are closed:
 app.on("window-all-closed", () => {
-    if (process.platform !== "darwin") app.quit();
+    if (process.platform !== "darwin") {
+        app.quit();
+    }
 });
