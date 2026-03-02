@@ -1,6 +1,7 @@
 const { app, BrowserWindow } = require("electron");
 const path = require("path"); //для нахождения файлов
 const { ipcMain } = require("electron");
+const { previewBackup, runBackup } = require("./backupEngine");
 
 let windows = {};
 
@@ -44,6 +45,8 @@ function createAllWindows() {
 }
 
 /////////////////////////////////////////
+ipcMain.handle("backup:preview", async (_event, config) => previewBackup(config));
+ipcMain.handle("backup:run", async (_event, config) => runBackup(config));
 
 app.whenReady().then(createAllWindows);
 
