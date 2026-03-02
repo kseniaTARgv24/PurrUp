@@ -47,8 +47,15 @@ ipcMain.handle("backup:run", async (_event, config) => runBackup(config));
 
 app.whenReady().then(createAllWindows);
 
+
+//Quit the app when all windows are closed:
 app.on("window-all-closed", () => {
-    if (process.platform !== "darwin") {
-        app.quit();
+    if (process.platform !== "darwin") app.quit();
+});
+
+ipcMain.on("open-window", (event, name) => {
+    if (windows[name]) {
+        windows[name].show();
+        windows[name].focus();
     }
 });
