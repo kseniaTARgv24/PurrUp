@@ -18,11 +18,11 @@ function createWindow(name, file, options = {}) {
     });
 
     windows[name].loadFile(path.join(__dirname, "renderer", file));
-    windows[name].setMenu(null);
+    windows[name].show();
 }
 
 function createAllWindows() {
-    createWindow("widget", "widget.html",{
+    createWindow("widget", "widget.html", {
         width: 300,
         height: 500,
         closable: true,
@@ -32,16 +32,15 @@ function createAllWindows() {
         minimizable: false,
         movable: true,
         resizable: false,
-        skipTaskbar: true,
-        show:true,
-    })
+        skipTaskbar: true
+    });
 
-    createWindow("logs", "logs.html")
-    createWindow("taskEditor", "taskEditor.html",{
-        show:true,
-    })
-    createWindow("Comp_Filter_Synch_Sched", "Comp_Filter_Synch_Sched.html")
-
+    // createWindow("logs", "logs.html");
+    // createWindow("taskEditor", "taskEditor.html");
+    // createWindow("comparison", "comparison.html");
+    // createWindow("schedule", "schedule.html");
+    // createWindow("sync", "sync.html");
+    // createWindow("filter", "filter.html");
 }
 
 /////////////////////////////////////////
