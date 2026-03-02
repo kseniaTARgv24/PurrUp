@@ -1,5 +1,6 @@
 const { app, BrowserWindow } = require("electron");
 const path = require("path"); //для нахождения файлов
+const { ipcMain } = require("electron");
 
 let windows = {};
 
@@ -16,10 +17,8 @@ function createWindow(name, file, options = {}) {
     });
 
     windows[name].loadFile(path.join(__dirname, "renderer", file));
-
-    windows[name].show();
+    windows[name].setMenu(null);
 }
-
 
 function createAllWindows() {
     createWindow("widget", "widget.html",{
@@ -32,22 +31,31 @@ function createAllWindows() {
         minimizable: false,
         movable: true,
         resizable: false,
-        skipTaskbar: true
+        skipTaskbar: true,
+        show:true,
     })
 
-    // createWindow("logs", "logs.html")
-    // createWindow("taskEditor", "taskEditor.html")
-    // createWindow("comparison", "comparison.html")
-    // createWindow("schedule", "schedule.html")
-    // createWindow("sync", "sync.html")
-    // createWindow("filter", "filter.html")
+    createWindow("logs", "logs.html")
+    createWindow("taskEditor", "taskEditor.html",{
+        show:true,
+    })
+    createWindow("Comp_Filter_Synch_Sched", "Comp_Filter_Synch_Sched.html")
+
 }
 
 /////////////////////////////////////////
 
 app.whenReady().then(createAllWindows);
 
+
 //Quit the app when all windows are closed:
 app.on("window-all-closed", () => {
     if (process.platform !== "darwin") app.quit();
+});
+
+ipcMain.on("open-window", (event, name) => {
+    if (windows[name]) {
+        windows[name].show();
+        windows[name].focus();
+    }
 });

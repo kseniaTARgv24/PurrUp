@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Comp_Filter_Synch_Sched</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="tabs">
+    <button class="tab active" data-tab="comparison">Comparison</button>
+    <button class="tab" data-tab="filter">Filter</button>
+    <button class="tab" data-tab="sync">Synchronization</button>
+    <button class="tab" data-tab="schedule">Schedule</button>
+</div>
+
+<div class="tab-content">
+
+    <div class="tab-panel active" id="comparison">
+
+        <div class="ffs-row">
+            <div class="ffs-left">
+                <div class="ffs-section-title">Select a variant:</div>
+
+                <label class="ffs-radio"><input type="radio" name="compare" checked> File time and size</label>
+                <label class="ffs-radio"><input type="radio" name="compare"> File content</label>
+                <label class="ffs-radio"><input type="radio" name="compare"> File size</label>
+            </div>
+
+            <div class="ffs-right">
+                <div class="ffs-note">
+                    Identify equal files by comparing modification time and size.
+                </div>
+            </div>
+        </div>
+
+        <div class="ffs-divider"></div>
+
+        <div class="ffs-row">
+            <label><input type="checkbox"> Include symbolic links</label>
+
+            <div class="ffs-inline">
+                <label><input type="radio" name="symlink" checked> Follow</label>
+                <label><input type="radio" name="symlink"> As link</label>
+            </div>
+        </div>
+
+        <div class="ffs-row">
+            <div>Ignore exact time shift [hh:mm]</div>
+            <input class="ffs-input" placeholder="1, 2, 4:30">
+        </div>
+
+        <div class="ffs-footer">
+            <button>OK</button>
+            <button>Cancel</button>
+        </div>
+
+    </div>
+
+    <div class="tab-panel" id="filter">
+
+        <div class="ffs-row">
+            <div class="ffs-col">
+                <div class="ffs-section-title">Include</div>
+                <textarea class="ffs-textarea">*</textarea>
+            </div>
+
+            <div class="ffs-col">
+                <div class="ffs-section-title">Exclude</div>
+                <textarea class="ffs-textarea">
+\System Volume Information\
+\$Recycle.Bin\
+\RECYCLE?\
+\Recovery\
+*thumbs.db
+            </textarea>
+            </div>
+        </div>
+
+        <div class="ffs-row">
+            <div class="ffs-col small">
+                <div class="ffs-section-title">File size</div>
+
+                <div class="ffs-inline">
+                    <span>Minimum</span>
+                    <input type="number" value="0">
+                </div>
+
+                <div class="ffs-inline">
+                    <span>Maximum</span>
+                    <input type="number" value="0">
+                </div>
+            </div>
+
+            <div class="ffs-col small">
+                <div class="ffs-section-title">Time span</div>
+                <input type="number" value="0">
+            </div>
+        </div>
+
+        <div class="ffs-footer">
+            <button>Default</button>
+            <button>Clear</button>
+            <div class="ffs-spacer"></div>
+            <button>OK</button>
+            <button>Cancel</button>
+        </div>
+
+    </div>
+
+    <div class="tab-panel" id="sync">
+
+        <div class="ffs-row">
+            <div class="ffs-left">
+                <div class="ffs-section-title">Select a variant:</div>
+
+                <label class="ffs-radio"><input type="radio" name="sync" checked> Two way</label>
+                <label class="ffs-radio"><input type="radio" name="sync"> Mirror</label>
+                <label class="ffs-radio"><input type="radio" name="sync"> Update</label>
+                <label class="ffs-radio"><input type="radio" name="sync"> Custom</label>
+            </div>
+
+            <div class="ffs-right">
+                <label><input type="checkbox" checked> Use database file to detect changes</label>
+            </div>
+        </div>
+
+        <div class="ffs-divider"></div>
+
+        <div class="ffs-row">
+            <div class="ffs-section-title">Delete and overwrite:</div>
+            <label><input type="radio" name="delete" checked> Recycle bin</label>
+            <label><input type="radio" name="delete"> Permanent</label>
+            <label><input type="radio" name="delete"> Versioning</label>
+        </div>
+
+        <div class="ffs-row">
+            <label><input type="checkbox"> Send email notification</label>
+        </div>
+
+        <div class="ffs-row">
+            <label><input type="checkbox"> Change log folder</label>
+            <input class="ffs-input" placeholder="Log path">
+        </div>
+
+        <div class="ffs-row">
+            <span>Run a command:</span>
+            <select>
+                <option>On completion</option>
+            </select>
+            <input class="ffs-input" placeholder="shutdown /s /t 60">
+        </div>
+
+        <div class="ffs-footer">
+            <button>OK</button>
+            <button>Cancel</button>
+        </div>
+
+    </div>
+
+    <div class="tab-panel" id="schedule">
+
+        <label><input type="checkbox"> Enable schedule</label>
+
+        <div class="ffs-row">
+            <span>Run every</span>
+            <input type="number" value="1">
+            <select>
+                <option>minutes</option>
+                <option>hours</option>
+                <option>days</option>
+            </select>
+        </div>
+
+        <div class="ffs-row">
+            <span>Start time</span>
+            <input type="time">
+        </div>
+
+        <div class="ffs-footer">
+            <button>OK</button>
+            <button>Cancel</button>
+        </div>
+
+    </div>
+
+</div>
+
+
+<script src="ui.js"></script>
+</body>
+</html>

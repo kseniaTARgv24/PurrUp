@@ -1,10 +1,88 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>Title</title>
+    <meta charset="UTF-8" />
+    <title>Task Editor</title>
+    <link rel="stylesheet" href="styles.css" />
 </head>
-<body>
+
+<body class="app-window">
+
+<!-- HEADER -->
+<div class="task-header">
+    <input class="task-name" placeholder="Task name" />
+
+    <div class="header-actions">
+        <button class="compare-btn">Compare</button>
+        <button class="settings-btn" onclick="window.api.openWindow('Comp_Filter_Synch_Sched')">
+            Settings
+        </button>
+    </div>
+</div>
+
+<!-- SOURCE -->
+<div class="path-block">
+    <div class="path-label">Source</div>
+
+    <div class="path-row">
+        <button class="icon-btn">＋</button>
+        <input class="path-input" placeholder="Select source folder" />
+        <button class="browse-btn">Browse</button>
+    </div>
+</div>
+
+<!-- TARGET -->
+<div class="path-block">
+    <div class="path-label">Target</div>
+
+    <div class="path-row">
+        <button class="icon-btn">＋</button>
+        <input class="path-input" placeholder="Select target folder" />
+        <button class="browse-btn">Browse</button>
+    </div>
+</div>
+
+<!-- FILE LISTS -->
+<div class="file-area">
+
+    <!-- LEFT -->
+    <div class="file-panel">
+        <div class="file-header">
+            <span>Relative path</span>
+            <span>Size</span>
+        </div>
+
+        <div class="file-list">
+            <!-- left files -->
+        </div>
+    </div>
+
+    <!-- ACTIONS -->
+    <div class="action-panel">
+        <button class="action-btn">→</button>
+        <button class="action-btn">←</button>
+        <button class="action-btn">✕</button>
+        <button class="action-btn">–</button>
+    </div>
+
+    <!-- RIGHT -->
+    <div class="file-panel">
+        <div class="file-header">
+            <span>Relative path</span>
+            <span>Size</span>
+        </div>
+
+        <div class="file-list">
+            <!-- right files -->
+        </div>
+    </div>
+
+</div>
+
+<!-- STATUS -->
+<div class="status-bar">
+    Statistics: 0 files
+</div>
 
 </body>
 </html>
