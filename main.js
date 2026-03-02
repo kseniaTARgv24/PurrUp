@@ -1,6 +1,6 @@
-const { app, BrowserWindow } = require("electron");
-const path = require("path"); //для нахождения файлов
-const { ipcMain } = require("electron");
+const { app, BrowserWindow, ipcMain } = require("electron");
+const path = require("path");
+const { previewBackup, runBackup } = require("./backupEngine");
 
 let windows = {};
 
@@ -17,11 +17,11 @@ function createWindow(name, file, options = {}) {
     });
 
     windows[name].loadFile(path.join(__dirname, "renderer", file));
-    windows[name].setMenu(null);
+    windows[name].show();
 }
 
 function createAllWindows() {
-    createWindow("widget", "widget.html",{
+    createWindow("widget", "widget.html", {
         width: 300,
         height: 500,
         closable: true,
@@ -31,19 +31,19 @@ function createAllWindows() {
         minimizable: false,
         movable: true,
         resizable: false,
-        skipTaskbar: true,
-        show:true,
-    })
+        skipTaskbar: true
+    });
 
-    createWindow("logs", "logs.html")
-    createWindow("taskEditor", "taskEditor.html",{
-        show:true,
-    })
-    createWindow("Comp_Filter_Synch_Sched", "Comp_Filter_Synch_Sched.html")
-
+    // createWindow("logs", "logs.html");
+    // createWindow("taskEditor", "taskEditor.html");
+    // createWindow("comparison", "comparison.html");
+    // createWindow("schedule", "schedule.html");
+    // createWindow("sync", "sync.html");
+    // createWindow("filter", "filter.html");
 }
 
-/////////////////////////////////////////
+ipcMain.handle("backup:preview", async (_event, config) => previewBackup(config));
+ipcMain.handle("backup:run", async (_event, config) => runBackup(config));
 
 app.whenReady().then(createAllWindows);
 
