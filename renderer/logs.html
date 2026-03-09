@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <title>Logs</title>
-    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="widget_style.css" />
 </head>
 <body class="app-window">
 
@@ -16,6 +16,19 @@
         <!-- Логи будут подгружаться сюда -->
         <div class="log-entry">No logs yet</div>
     </div>
+</div>
+
+<div class="ffs-row">
+    <label><input type="checkbox"> Change log folder</label>
+    <input class="ffs-input" placeholder="Log path">
+</div>
+
+<div class="ffs-row">
+    <span>Run a command:</span>
+    <select>
+        <option>On completion</option>
+    </select>
+    <input class="ffs-input" placeholder="shutdown /s /t 60">
 </div>
 
 <div class="window-footer">

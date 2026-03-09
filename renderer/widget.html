@@ -2,9 +2,220 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>widget main</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <script>
+        tailwind.config = {
+            theme:{
+                extend:{
+                    colors:{
+                        cream:"#fff7f5",
+                        blush:"#f8dede",
+                        rose:"#e9b8c4",
+                        roseSoft:"#f4cfd6",
+                        ink:"#5a4a4e"
+                    }
+                }
+            }
+        }
+    </script>
+
+    <link rel="stylesheet" href="widget_style.css">
+
 </head>
-<body>
-    <h2>Welcome to purrup?</h2>
+
+
+<body class="bg-cream flex justify-center items-start p-6">
+
+<div class="widget w-[340px] flex flex-col gap-4">
+    <button
+            class="widget-pin
+                absolute
+                top-3
+                left-1/2
+                -translate-x-1/2
+                -translate-y-1/2
+                w-[15px]
+                h-[15px]
+                rounded-full
+                border
+                border-roseSoft
+                bg-white
+                shadow
+                transition
+                duration-200
+                hover:scale-110
+                z-20">
+    </button>
+    <!-- LOTTIE AREA -->
+    <div class="widget-animation
+        h-[160px]
+        rounded-2xl
+        border
+        border-roseSoft
+        bg-white/70
+        backdrop-blur
+        flex items-center justify-center">
+
+        <span class="text-xs text-ink/50">Lottie animation</span>
+
+    </div>
+
+
+    <!-- TOP BUTTONS -->
+    <div class="widget-buttons flex items-center gap-6">
+
+        <!-- LOGS -->
+        <button
+                class="logs-btn
+w-[60px]
+h-[60px]
+rounded-xl
+border
+border-roseSoft
+bg-white/70
+transition
+duration-200
+hover:scale-110
+flex items-center justify-center"
+                onclick="window.api.openWindow('logs')"
+        >
+        </button>
+
+
+        <!-- EDITOR -->
+        <button
+                class="editor-btn
+w-[64px]
+h-[64px]
+rounded-full
+border
+border-roseSoft
+bg-white/70
+transition
+duration-200
+hover:scale-110
+flex items-center justify-center"
+                onclick="window.api.openWindow('taskEditor')"
+        >
+        </button>
+
+    </div>
+
+
+    <!-- TASK LIST -->
+    <div class="task-container relative">
+
+<!--        &lt;!&ndash; fade top &ndash;&gt;-->
+<!--        <div class="pointer-events-none absolute top-0 left-0 right-2 h-6 bg-gradient-to-b from-cream to-transparent z-10"></div>-->
+
+        <!-- fade bottom -->
+        <div class="pointer-events-none absolute bottom-0 left-0 right-2 h-6 bg-gradient-to-t from-cream to-transparent z-10"></div>
+
+
+        <div class="task-scroll
+h-[260px]
+overflow-y-auto
+flex flex-col gap-3 pr-2">
+
+
+            <!-- TASK ITEM -->
+            <div class="task-item
+flex items-center
+justify-between
+gap-3
+px-4
+py-3
+rounded-xl
+border
+border-roseSoft
+bg-white/70
+backdrop-blur">
+
+                <!-- TASK NAME -->
+                <div class="task-name flex-1 text-sm">
+                    Task name new task
+                </div>
+
+                <!-- START BUTTON -->
+                <button
+                        class="task-start
+w-[36px]
+h-[36px]
+rounded-full
+border
+border-roseSoft
+bg-white/70
+transition
+duration-200
+hover:scale-110">
+                </button>
+
+                <!-- TOGGLE -->
+                <button
+                        class="task-toggle
+w-[64px]
+h-[32px]
+rounded-full
+border
+border-roseSoft
+bg-white/70
+transition
+duration-200">
+                </button>
+
+            </div>
+
+
+            <!-- ПРОБНЫЕ ЭЛЕМЕНТЫ -->
+
+            <div class="task-item flex items-center justify-between gap-3 px-4 py-3 rounded-xl border border-roseSoft bg-white/70">
+                <div class="task-name flex-1 text-sm">Task name new task</div>
+                <button class="task-start w-[36px] h-[36px] rounded-full border border-roseSoft"></button>
+                <button class="task-toggle w-[64px] h-[32px] rounded-full border border-roseSoft"></button>
+            </div>
+
+            <div class="task-item flex items-center justify-between gap-3 px-4 py-3 rounded-xl border border-roseSoft bg-white/70">
+                <div class="task-name flex-1 text-sm">Task name new task</div>
+                <button class="task-start w-[36px] h-[36px] rounded-full border border-roseSoft"></button>
+                <button class="task-toggle w-[64px] h-[32px] rounded-full border border-roseSoft"></button>
+            </div>
+
+            <div class="task-item flex items-center justify-between gap-3 px-4 py-3 rounded-xl border border-roseSoft bg-white/70">
+                <div class="task-name flex-1 text-sm">Task name new task</div>
+                <button class="task-start w-[36px] h-[36px] rounded-full border border-roseSoft"></button>
+                <button class="task-toggle w-[64px] h-[32px] rounded-full border border-roseSoft"></button>
+            </div>
+
+            <div class="task-item flex items-center justify-between gap-3 px-4 py-3 rounded-xl border border-roseSoft bg-white/70">
+                <div class="task-name flex-1 text-sm">Task name new task</div>
+                <button class="task-start w-[36px] h-[36px] rounded-full border border-roseSoft"></button>
+                <button class="task-toggle w-[64px] h-[32px] rounded-full border border-roseSoft"></button>
+            </div>
+
+            <div class="task-item flex items-center justify-between gap-3 px-4 py-3 rounded-xl border border-roseSoft bg-white/70">
+                <div class="task-name flex-1 text-sm">Task name new task</div>
+                <button class="task-start w-[36px] h-[36px] rounded-full border border-roseSoft"></button>
+                <button class="task-toggle w-[64px] h-[32px] rounded-full border border-roseSoft"></button>
+            </div>
+
+            <div class="task-item flex items-center justify-between gap-3 px-4 py-3 rounded-xl border border-roseSoft bg-white/70">
+                <div class="task-name flex-1 text-sm">Task name new task</div>
+                <button class="task-start w-[36px] h-[36px] rounded-full border border-roseSoft"></button>
+                <button class="task-toggle w-[64px] h-[32px] rounded-full border border-roseSoft"></button>
+            </div>
+
+            <div class="task-item flex items-center justify-between gap-3 px-4 py-3 rounded-xl border border-roseSoft bg-white/70">
+                <div class="task-name flex-1 text-sm">Task name new task</div>
+                <button class="task-start w-[36px] h-[36px] rounded-full border border-roseSoft"></button>
+                <button class="task-toggle w-[64px] h-[32px] rounded-full border border-roseSoft"></button>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+
 </body>
 </html>

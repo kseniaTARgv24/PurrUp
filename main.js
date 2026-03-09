@@ -1,7 +1,6 @@
 const { app, BrowserWindow } = require("electron");
 const path = require("path"); //для нахождения файлов
 const { ipcMain } = require("electron");
-const { previewBackup, runBackup } = require("./backupEngine");
 
 let windows = {};
 
@@ -11,10 +10,15 @@ function createWindow(name, file, options = {}) {
         height: 600,
         show: false,
         webPreferences: {
-            preload: path.join(__dirname, "preload.js"),
+            preload: path.join(__dirname, "preload.js"), //че за хуйня
             contextIsolation: true
         },
         ...options
+    });
+
+    windows[name].on('close', (e) => {
+        e.preventDefault();
+        windows[name].hide();
     });
 
     windows[name].loadFile(path.join(__dirname, "renderer", file));
@@ -23,33 +27,31 @@ function createWindow(name, file, options = {}) {
 
 function createAllWindows() {
     createWindow("widget", "widget.html",{
-        width: 300,
-        height: 500,
-        closable: true,
-        focusable: false,
-        fullscreenable: false,
-        maximizable: false,
-        minimizable: false,
-        movable: true,
+        width: 330,
+        height: 550,
         resizable: false,
+        movable: true,
+        minimizable: false,
+        maximizable: false,
+        fullscreenable: false,
         skipTaskbar: true,
-        show:true,
+        alwaysOnTop: false,
+        alwaysOnBottom: true,
+        frame: false,
+        show: true,
+        focusable: true,
     })
 
-    createWindow("logs", "logs.html")
+    createWindow("logs", "logs.html",{show:false,})
     createWindow("taskEditor", "taskEditor.html",{
-        show:true,
+        show:false,
     })
-    createWindow("Comp_Filter_Synch_Sched", "Comp_Filter_Synch_Sched.html")
+    createWindow("Comp_Filter_Synch_Sched", "Comp_Filter_Synch_Sched.html",{show:false,})
 
 }
 
 /////////////////////////////////////////
-ipcMain.handle("backup:preview", async (_event, config) => previewBackup(config));
-ipcMain.handle("backup:run", async (_event, config) => runBackup(config));
-
 app.whenReady().then(createAllWindows);
-
 
 //Quit the app when all windows are closed:
 app.on("window-all-closed", () => {
@@ -60,5 +62,10 @@ ipcMain.on("open-window", (event, name) => {
     if (windows[name]) {
         windows[name].show();
         windows[name].focus();
-    }
+    }else {
+        createWindow(name, `${name}.html`);
+        windows[name].show();
+        windows[name].focus();}
 });
+
+

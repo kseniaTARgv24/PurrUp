@@ -1,87 +1,105 @@
+<!-- ========================= -->
+<!-- Task Editor -->
+<!-- ========================= -->
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8" />
     <title>Task Editor</title>
-    <link rel="stylesheet" href="styles.css" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme:{
+                extend:{
+                    colors:{
+                        cream:"#fff7f5",
+                        blush:"#f8dede",
+                        rose:"#e9b8c4",
+                        roseSoft:"#f4cfd6",
+                        ink:"#5a4a4e"
+                    }
+                }
+            }
+        }
+    </script>
 </head>
 
-<body class="app-window">
+<body class="app-window bg-cream text-ink p-6">
 
 <!-- HEADER -->
-<div class="task-header">
-    <input class="task-name" placeholder="Task name" />
+<div class="task-header flex items-center gap-3 mb-4 bg-white/70 backdrop-blur border border-roseSoft rounded-xl p-3">
+    <input class="task-name flex-1 px-3 py-1.5 rounded-md border border-roseSoft bg-white/70" placeholder="Task name" />
 
-    <div class="header-actions">
-        <button class="compare-btn">Compare</button>
-        <button class="compare-btn">ПУСК!</button>
-        <button class="settings-btn" onclick="window.api.openWindow('Comp_Filter_Synch_Sched')">
+    <div class="header-actions flex gap-2">
+        <button class="compare-btn px-3 py-1.5 rounded-md bg-blush hover:bg-roseSoft">Compare</button>
+        <button class="compare-btn px-3 py-1.5 rounded-md bg-rose text-white">ПУСК!</button>
+        <button class="settings-btn px-3 py-1.5 rounded-md border border-roseSoft" onclick="window.api.openWindow('Comp_Filter_Synch_Sched')">
             Settings
         </button>
     </div>
 </div>
 
 <!-- SOURCE -->
-<div class="path-block">
-    <div class="path-label">Source</div>
+<div class="path-container flex gap-4 mb-4" style="flex-direction: row">
+    <div class="path-block flex-1">
+        <div class="path-label text-sm font-medium mb-1">Source</div>
 
-    <div class="path-row">
-        <button class="icon-btn">＋</button>
-        <input class="path-input" placeholder="Select source folder" />
-        <button class="browse-btn">Browse</button>
+        <div class="path-row flex gap-2">
+            <button class="icon-btn w-8 rounded-md bg-blush">＋</button>
+            <input class="path-input flex-1 px-2 py-1.5 rounded-md border border-roseSoft bg-white/70" placeholder="Select source folder" />
+            <button class="browse-btn px-3 rounded-md border border-roseSoft">Browse</button>
+        </div>
     </div>
-</div>
 
-<!-- TARGET -->
-<div class="path-block">
-    <div class="path-label">Target</div>
+    <!-- TARGET -->
+    <div class="path-block flex-1">
+        <div class="path-label text-sm font-medium mb-1">Target</div>
 
-    <div class="path-row">
-        <button class="icon-btn">＋</button>
-        <input class="path-input" placeholder="Select target folder" />
-        <button class="browse-btn">Browse</button>
+        <div class="path-row flex gap-2">
+            <button class="icon-btn w-8 rounded-md bg-blush">＋</button>
+            <input class="path-input flex-1 px-2 py-1.5 rounded-md border border-roseSoft bg-white/70" placeholder="Select target folder" />
+            <button class="browse-btn px-3 rounded-md border border-roseSoft">Browse</button>
+        </div>
     </div>
 </div>
 
 <!-- FILE LISTS -->
-<div class="file-area">
+<div class="file-area flex border border-roseSoft rounded-xl overflow-hidden bg-white/70">
 
     <!-- LEFT -->
-    <div class="file-panel">
-        <div class="file-header">
+    <div class="file-panel flex-1 flex flex-col">
+        <div class="file-header flex justify-between px-3 py-1.5 text-xs bg-blush/40 border-b border-roseSoft">
             <span>Relative path</span>
             <span>Size</span>
         </div>
 
-        <div class="file-list">
+        <div class="file-list flex-1">
             <!-- left files -->
         </div>
     </div>
 
     <!-- ACTIONS -->
-    <div class="action-panel">
-        <button class="action-btn">→</button>
-        <button class="action-btn">←</button>
-        <button class="action-btn">✕</button>
-        <button class="action-btn">–</button>
+    <div class="action-panel w-16 flex items-center justify-center border-x border-roseSoft">
+        <button class="action-btn px-2 py-1 rounded-md bg-blush">???</button>
     </div>
 
     <!-- RIGHT -->
-    <div class="file-panel">
-        <div class="file-header">
+    <div class="file-panel flex-1 flex flex-col">
+        <div class="file-header flex justify-between px-3 py-1.5 text-xs bg-blush/40 border-b border-roseSoft">
             <span>Relative path</span>
             <span>Size</span>
         </div>
 
-        <div class="file-list">
+        <div class="file-list flex-1">
             <!-- right files -->
         </div>
+
     </div>
 
 </div>
 
 <!-- STATUS -->
-<div class="status-bar">
+<div class="status-bar mt-3 px-3 py-1.5 text-xs bg-blush/30 border border-roseSoft rounded-md">
     Statistics: 0 files
 </div>
 

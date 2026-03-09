@@ -1,0 +1,13 @@
+html, body {
+    overflow: hidden;
+    -webkit-app-region: drag;
+}
+
+button,
+input,
+textarea,
+select,
+a,
+.task-scroll{
+    -webkit-app-region: no-drag;
+}
