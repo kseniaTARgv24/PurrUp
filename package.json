@@ -12,6 +12,9 @@
   "license": "ISC",
   "devDependencies": {
     "electron": "^40.4.1",
-    "tailwindcss": "^4.1.18"
+    "tailwindcss": "^4.2.1"
+  },
+  "dependencies": {
+    "@tailwindcss/vite": "^4.2.1"
   }
 }

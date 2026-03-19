@@ -1,7 +1,10 @@
 const { app, BrowserWindow } = require("electron");
 const path = require("path"); //для нахождения файлов
 const { ipcMain } = require("electron");
+///methods
+const backupEngine = require("./BackUp_engine.js");
 
+////
 let windows = {};
 
 function createWindow(name, file, options = {}) {
@@ -11,7 +14,7 @@ function createWindow(name, file, options = {}) {
         show: false,
         webPreferences: {
             preload: path.join(__dirname, "preload.js"), //че за хуйня
-            contextIsolation: true
+            contextIsolation: true,
         },
         ...options
     });
@@ -23,6 +26,9 @@ function createWindow(name, file, options = {}) {
 
     windows[name].loadFile(path.join(__dirname, "renderer", file));
     windows[name].setMenu(null);
+
+    // windows[name].webContents.openDevTools();
+
 }
 
 function createAllWindows() {
@@ -67,5 +73,13 @@ ipcMain.on("open-window", (event, name) => {
         windows[name].show();
         windows[name].focus();}
 });
+
+ipcMain.handle("compare-dirs", (event, dir1, dir2) => {
+    return backupEngine.compareDirs(dir1, dir2); // возвращаем результат в renderer
+});
+
+ipcMain.handle("scan-folder", (event, dir, file_list={}, root) => {
+    return backupEngine.scan_folder(dir, file_list, root);
+})
 
 
