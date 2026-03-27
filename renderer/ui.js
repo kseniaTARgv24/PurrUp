@@ -10,11 +10,11 @@ document.querySelectorAll(".tab").forEach(tab => {
     });
 });
 
-///////////////////////////////// compare folders
+///////////////////////////////// compare folders /////////////////////////////////////
+
 const sourceInput = document.querySelector('.path-container .path-block:first-child .path-input');
 const targetInput = document.querySelector('.path-container .path-block:last-child .path-input');
 const compareBtn = document.querySelector('.compare-btn');
-
 
 compareBtn.addEventListener('click', async () => {
         const dir1 = sourceInput.value;
@@ -106,16 +106,7 @@ function createEmptyRow() {
     return row;
 }
 
-/////////////////////////// start sync
-const saveBtn = document.querySelector('.save-btn');
+<!--todo расивый снос строк в списке файлов-->
 
-
-    /// get settings from CFSS page
-    const sync_mode = document.querySelector('input[name="sync"]:checked').value;
-    const delete_file_method = document.querySelector('input[name="delete"]:checked').value;
-
-
-    /// get folders (sourceInput, targetInput)
-    ///
 
 

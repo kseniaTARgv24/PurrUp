@@ -1,13 +1,18 @@
-// const path = require("path");
-// const { join, resolve, basename } = require('path');
-// const fs = require("fs");
-// const fsp = require("fs/promises");
+//for console testing:
+// import path from "path";
+// import fs from "fs";
+// import fsp from "fs/promises";
+// const { join, resolve, basename } = path;
 
-import path from "path";
-import fs from "fs";
-import fsp from "fs/promises";
-
+// for export:
+const path = require("path");
+const fs = require("fs");
+const fsp = require("fs/promises");
 const { join, resolve, basename } = path;
+
+
+
+////////////////// Main funcs ///////////////
 
 //get file list from folders in a form {file_relative_path: size, date}
 function scan_folder(dir, file_list={}, root) {
@@ -23,7 +28,7 @@ function scan_folder(dir, file_list={}, root) {
                 const stats = fs.statSync(fullPath);
 
                 if (stats.isDirectory()){
-                    scan_folder(fullPath, file_list, root = dir);
+                    scan_folder(fullPath, file_list, root);
                     return;
                 }
 
@@ -87,21 +92,33 @@ function compareDirs(dir1, dir2) {
     return compare_result;
 }
 
-////////////////////////////
+//sync files (for testing, later in DB)
 const SYNC_MODES = ['Two way', 'Mirror', 'Update']
 const DELETE_OVERWRITE_METHODS = ["Recycle bin", "Permanent delete", "Versioning"]
 
-async function sync_files(dir1, dir2, compare_result_list, sync_mode, delete_file_method){
+async function sync_files(dir1, dir2){
 
+    // TODO add Filter (exclude, include, file size - min/max
+    // TODO add schedule (on/off, Run-every ..., start time (NOW or specific), ignore time span (on/off), time span)
+
+    // folders data and info:
     const folder_1_list = scan_folder(dir1);
     const folder_2_list = scan_folder(dir2);
+    const compare_result_list = compareDirs(dir1, dir2)
+
+    // user's sync settings
+    const sync_mode = get_sync_mode();
+    const delete_file_method = get_delete_file_method()
+    const filterSettings = get_filter_settings();
+    const scheduleSettings = get_schedule_settings();
 
     console.log("before: ", compareDirs(dir1, dir2));
 
-
     //// MOVED FILES ////
     const moved = detectMoved(folder_1_list, folder_2_list, compare_result_list)
-    //////////////////////////////////////////////////
+    //// FILTERING ////
+    // todo переписать списки файлов если есть фильтры
+
 
     switch(sync_mode){
         case "Two way":
@@ -222,6 +239,8 @@ async function sync_files(dir1, dir2, compare_result_list, sync_mode, delete_fil
                     console.log("in both dir's: different method!")
 
                 }
+                else if (file.status === "Left: moved" || file.status === "Right: to move"){}
+                else {console.error("wrong file status: ", file.status);}
             }
             break;
         case "Mirror":
@@ -314,6 +333,8 @@ async function sync_files(dir1, dir2, compare_result_list, sync_mode, delete_fil
 
                     await fsp.copyFile(src, dest);
                 }
+                else if (file.status === "Left: moved" || file.status === "Right: to move"){}
+                else {console.error("wrong file status: ", file.status);}
             }
             await moveFiles(moved, dir2)
             break;
@@ -373,6 +394,8 @@ async function sync_files(dir1, dir2, compare_result_list, sync_mode, delete_fil
 
                     await fsp.copyFile(src, dest);
                 }
+                else if (file.status === "Left: moved" || file.status === "Right: to move"){}
+                else {console.error("wrong file status: ", file.status);}
             }
             await moveFiles(moved, dir2)
             break;
@@ -381,20 +404,58 @@ async function sync_files(dir1, dir2, compare_result_list, sync_mode, delete_fil
     console.log("after: ", compareDirs(dir1, dir2));
 }
 
+//todo работа с бд
 
 //////////// Helper funcs ///////////////
+
+// Getting settings info :
+
+function get_sync_mode(sync_mode = ""){
+    // from db
+    sync_mode = SYNC_MODES[2] //REF
+    return sync_mode
+}
+
+function get_delete_file_method(delete_file_method = ""){
+    // from db
+    delete_file_method = DELETE_OVERWRITE_METHODS[1] //REF
+    return delete_file_method
+}
+
+function get_filter_settings() {
+    // Заглушка — позже будет из БД
+    const include = ["*.txt", "*.docx"];
+    const exclude = ["*.tmp", "*.log"];
+    const size_min = 0;                        // (байты)
+    const size_max = 10_000_000;               // (байты)
+
+    return { include, exclude, size_min, size_max };
+}
+
+function get_schedule_settings() {
+    // Заглушка — позже будет из БД
+    const enabled = true;
+    const run_every = "1h";                     // "30m", "1h", "1d"
+    const start_time = new Date();              // NOW — текущее время
+    const ignore_time_span = false;
+    const time_span = { start: "08:00", end: "20:00" };
+
+    return { enabled, run_every, start_time, ignore_time_span, time_span };
+}
+
 function get_versioning_folder(){
-    // getting it from ui
+    // getting it from BD
     const versioning_folder = "C:/Users/Seagulltoon/Desktop/dir2_version"
     return versioning_folder;
 }
 
 function get_trash_folder(){
-    // getting it from ui??
+    // getting it from USER PC
     const trash_folder = "C:/Users/Seagulltoon/Desktop/Recycle Bin"
     return trash_folder;
 }
 
+// Other helping funcs :
 async function getUniquePath(dir, fileName) {
     const ext = path.extname(fileName);     // .txt
     const name = path.basename(fileName, ext);
@@ -486,12 +547,16 @@ async function moveFiles(list, dir2) {
     }
 }
 
+
+
 ////////////////////////////// exporting ////////////////////////////
-// module.exports = {
-//     compareDirs,
-//     scan_folder,
-//     sync_files
-// };
+module.exports = {
+    compareDirs,
+    scan_folder,
+    sync_files
+};
+
+
 
 
 /////////////////////////////// funcs tests ///////////////////////////
@@ -504,8 +569,8 @@ const dir_5 = "C:/Users/Seagulltoon/Desktop/5"
 const dir_6 = "C:/Users/Seagulltoon/Desktop/6"
 
 
-const delete_file_method = DELETE_OVERWRITE_METHODS[1];
-await sync_files(dir_1, dir_2, compareDirs(dir_1, dir_2), SYNC_MODES[2], delete_file_method)
+// const delete_file_method = DELETE_OVERWRITE_METHODS[1];
+// await sync_files(dir_1, dir_2, compareDirs(dir_1, dir_2), SYNC_MODES[2], delete_file_method)
 // await sync_files(dir_3, dir_4, compareDirs(dir_3, dir_4), SYNC_MODES[1], delete_file_method)
 // await sync_files(dir_5, dir_6, compareDirs(dir_5, dir_6), SYNC_MODES[2], delete_file_method)
 // ---> takes info from BD not from UI!!!!
@@ -515,7 +580,4 @@ await sync_files(dir_1, dir_2, compareDirs(dir_1, dir_2), SYNC_MODES[2], delete_
 // console.log(detectMoved(scan_folder(dir_1), scan_folder(dir_2), a))
 // console.log(a);
 
-///ToDo:
-// func start_sync by schedule
-// func save new task into bd
-// add filtering to sync func
+// console.log(scan_folder(dir_1))

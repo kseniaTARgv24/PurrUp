@@ -35,40 +35,14 @@
 <body class="bg-cream text-ink p-6">
 
 <div class="tabs flex gap-1 mb-4 bg-blush/40 p-1 rounded-xl w-fit">
-    <button class="tab active px-4 py-2 rounded-lg text-sm" data-tab="comparison">Comparison</button>
-    <button class="tab px-4 py-2 rounded-lg text-sm" data-tab="filter">Filter</button>
+    <button class="tab active px-4 py-2 rounded-lg text-sm" data-tab="filter">Filter</button>
     <button class="tab px-4 py-2 rounded-lg text-sm" data-tab="sync">Synchronization</button>
     <button class="tab px-4 py-2 rounded-lg text-sm" data-tab="schedule">Schedule</button>
 </div>
 
 <div class="tab-content bg-white/70 backdrop-blur border border-roseSoft rounded-xl p-6 space-y-6 w-[680px]">
 
-    <div class="tab-panel active" id="comparison">
-
-        <div class="ffs-row flex gap-8">
-            <div class="ffs-left space-y-2">
-                <div class="ffs-section-title font-semibold text-sm">Select a variant:</div>
-
-                <label class="ffs-radio flex gap-2 items-center text-sm"><input type="radio" name="compare" checked class="accent-rose"> File time and size</label>
-                <label class="ffs-radio flex gap-2 items-center text-sm"><input type="radio" name="compare" class="accent-rose"> File content</label>
-                <label class="ffs-radio flex gap-2 items-center text-sm"><input type="radio" name="compare" class="accent-rose"> File size</label>
-            </div>
-
-            <div class="ffs-right flex-1">
-                <div class="ffs-note bg-blush/50 rounded-lg p-3 text-sm">
-                    Identify equal files by comparing modification time and size.
-                </div>
-            </div>
-        </div>
-
-        <div class="ffs-footer flex justify-end gap-2 mt-6">
-            <button class="px-4 py-1.5 rounded-md bg-roseSoft hover:bg-rose text-white">OK</button>
-            <button class="px-4 py-1.5 rounded-md border border-roseSoft">Cancel</button>
-        </div>
-
-    </div>
-
-    <div class="tab-panel" id="filter">
+    <div class="tab-panel active" id="filter">  <!--todo авто удаление лишних пробелов на конце!!!!!-->
 
         <div class="ffs-row flex gap-8">
             <div class="ffs-col flex-1">
@@ -118,12 +92,11 @@
 
         <div class="ffs-row flex gap-8">
             <div class="ffs-left space-y-2">
-                <div class="ffs-section-title font-semibold text-sm">Select a variant:</div>
+                <div class="ffs-section-title font-semibold text-sm">Select a variant:</div> <!--todo описание каждого метода-->
 
                 <label class="ffs-radio flex gap-2 items-center text-sm"><input type="radio" name="sync" checked class="accent-rose"> Two way</label>
                 <label class="ffs-radio flex gap-2 items-center text-sm"><input type="radio" name="sync" class="accent-rose"> Mirror</label>
                 <label class="ffs-radio flex gap-2 items-center text-sm"><input type="radio" name="sync" class="accent-rose"> Update</label>
-                <label class="ffs-radio flex gap-2 items-center text-sm"><input type="radio" name="sync" class="accent-rose"> Custom</label>
             </div>
 
         </div>
@@ -131,10 +104,10 @@
         <div class="ffs-divider h-px bg-roseSoft my-4"></div>
 
         <div class="ffs-row space-y-1 text-sm">
-            <div class="ffs-section-title font-semibold">Delete and overwrite:</div>
+            <div class="ffs-section-title font-semibold">Delete and overwrite:</div> <!--todo описание каждого метода-->
             <label class="flex gap-2 items-center"><input type="radio" name="delete" checked class="accent-rose"> Recycle bin</label>
             <label class="flex gap-2 items-center"><input type="radio" name="delete" class="accent-rose"> Permanent</label>
-            <label class="flex gap-2 items-center"><input type="radio" name="delete" class="accent-rose"> Versioning</label>
+            <label class="flex gap-2 items-center"><input type="radio" name="delete" class="accent-rose"> Versioning</label> <!--todo выбор папки!-->
         </div>
 
         <div class="ffs-footer flex justify-end gap-2 mt-6">
@@ -160,7 +133,7 @@
 
         <div class="ffs-row flex items-center gap-2 text-sm mt-3">
             <span>Start time</span>
-            <input type="time" class="px-2 py-1 rounded-md border border-roseSoft bg-white/70">
+            <input type="time" class="px-2 py-1 rounded-md border border-roseSoft bg-white/70">  <!--todo кнопка NOW для авто выставления текущего времени-->
         </div>
 
         <div class="ffs-row flex items-center gap-2 text-sm mt-3">
