@@ -11,7 +11,6 @@ const fsp = require("fs/promises");
 const { join, resolve, basename } = path;
 
 
-
 ////////////////// Main funcs ///////////////
 
 //get file list from folders in a form {file_relative_path: size, date}
@@ -97,29 +96,60 @@ const SYNC_MODES = ['Two way', 'Mirror', 'Update']
 const DELETE_OVERWRITE_METHODS = ["Recycle bin", "Permanent delete", "Versioning"]
 
 async function sync_files(dir1, dir2){
-
-    // TODO add Filter (exclude, include, file size - min/max
-    // TODO add schedule (on/off, Run-every ..., start time (NOW or specific), ignore time span (on/off), time span)
+    const scheduleSettings = get_schedule_settings(); // { enabled, run_every, start_time, ignore_time_span, time_span } --> { enabled: true, run_every: '1h', start_time: 2026-03-30T12:41:54.330Z, ignore_time_span: false,  time_span: { start: '08:00', end: '20:00' }}
+    if (! isSyncAllowed(scheduleSettings, is_task_active())){
+        return;
+    }
 
     // folders data and info:
-    const folder_1_list = scan_folder(dir1);
+    const folder_1_list = scan_folder(dir1); //{file_relative_path: size, date}
     const folder_2_list = scan_folder(dir2);
-    const compare_result_list = compareDirs(dir1, dir2)
+    let compare_result_list = compareDirs(dir1, dir2)  //|is in dir1 -- is in dir2 -- (if both TRUE) status (same or not)|  { file: 'b.txt', status: "in both dir's: same" }
 
     // user's sync settings
     const sync_mode = get_sync_mode();
     const delete_file_method = get_delete_file_method()
-    const filterSettings = get_filter_settings();
-    const scheduleSettings = get_schedule_settings();
+    const filterSettings = get_filter_settings(); // { include, exclude, size_min, size_max } --> {include: [ '*.txt', '*.docx' ], exclude: [ '*.tmp', '*.log' ], size_min: 0, size_max: 10000000 }
 
     console.log("before: ", compareDirs(dir1, dir2));
 
     //// MOVED FILES ////
     const moved = detectMoved(folder_1_list, folder_2_list, compare_result_list)
+
     //// FILTERING ////
-    // todo переписать списки файлов если есть фильтры
+    let included_files = []
+    for (let file of compare_result_list){
+        //INCLUDE
+        if (filterSettings.include.length > 0 || !filterSettings.include.includes("*")){
+            // look for file 's that end with text after "*" (like in "*.txt")
+            const isIncluded = filterSettings.include.some(pattern =>    // параметры => то с ними сделать?
+                file.file.endsWith(pattern.replace("*", ""))      // тут: паттерн => есть ли файлы с окончанием как (если обрезать вот так паттерн)?
+            );
+            if (!isIncluded){ //not included
+                continue;
+            }
+        }
+        //EXCLUDE
+        if (filterSettings.exclude.length > 0){
+            const isExcluded = filterSettings.exclude.some(pattern =>
+                file.file.endsWith(pattern.replace("*", ""))
+            );
+            if (isExcluded){
+                continue;
+            }
+        }
+        //SIZE
+        const size1 = folder_1_list[file] ? folder_1_list[file].size : 0;
+        const size2 = folder_2_list[file] ? folder_2_list[file].size : 0;
+        if ((filterSettings.size_min && (size1 < filterSettings.size_min || size2 < filterSettings.size_min)) ||
+            (filterSettings.size_max && (size1 > filterSettings.size_max || size2 > filterSettings.size_max))) {
+            continue;
+        }
+        included_files.push(file)
+    }
+    compare_result_list = included_files
 
-
+    ///// MAIN SYNC PROC ////
     switch(sync_mode){
         case "Two way":
             for (let file of compare_result_list){
@@ -404,12 +434,36 @@ async function sync_files(dir1, dir2){
     console.log("after: ", compareDirs(dir1, dir2));
 }
 
+
 //todo работа с бд
+// 1 task = 1 db???
+// "is_task_active": true,
+// "filters": {
+//     "include": ["*.txt", "*.md"],   // файлы, которые обязательно включать
+//         "exclude": ["secret*.txt"],     // файлы, которые исключать
+//         "size_min": 0,                  // минимальный размер файла
+//         "size_max": 1048576             // максимальный размер файла
+// },
+// "schedule": {
+//     "enabled": true,                // включён ли синк
+//         "run_every": 60m/60s/60h,        // запуск каждые
+//         "start_time": "2026-03-30T08:00:00", // время старта
+//         "ignore_span": {
+//         "enabled": true,
+//             "from": "23:00",
+//             "to": "06:00"
+//     }
+//   "folders": {
+//     "versioning_folder": "C:/Users/Seagulltoon/Desktop/dir2_version",
+//     "trash_folder": "C:/Users/Seagulltoon/Desktop/Recycle Bin"
+//   }
+
+// ТУТ
+
 
 //////////// Helper funcs ///////////////
 
 // Getting settings info :
-
 function get_sync_mode(sync_mode = ""){
     // from db
     sync_mode = SYNC_MODES[2] //REF
@@ -443,6 +497,17 @@ function get_schedule_settings() {
     return { enabled, run_every, start_time, ignore_time_span, time_span };
 }
 
+function isSyncAllowed(scheduleSettings, is_task_active) {
+    //todo schedule + is_task_active
+    //{ enabled, run_every, start_time, ignore_time_span, time_span } --> { enabled: true, run_every: '1h', start_time: 2026-03-30T12:41:54.330Z, ignore_time_span: false,  time_span: { start: '08:00', end: '20:00' }}
+
+}
+
+function is_task_active(){
+    const is_task_active = true;
+    return is_task_active;
+}
+
 function get_versioning_folder(){
     // getting it from BD
     const versioning_folder = "C:/Users/Seagulltoon/Desktop/dir2_version"
@@ -456,6 +521,7 @@ function get_trash_folder(){
 }
 
 // Other helping funcs :
+
 async function getUniquePath(dir, fileName) {
     const ext = path.extname(fileName);     // .txt
     const name = path.basename(fileName, ext);
@@ -557,8 +623,6 @@ module.exports = {
 };
 
 
-
-
 /////////////////////////////// funcs tests ///////////////////////////
 
 const dir_1 = "C:/Users/Seagulltoon/Desktop/1"
@@ -568,9 +632,7 @@ const dir_4 = "C:/Users/Seagulltoon/Desktop/4"
 const dir_5 = "C:/Users/Seagulltoon/Desktop/5"
 const dir_6 = "C:/Users/Seagulltoon/Desktop/6"
 
-
-// const delete_file_method = DELETE_OVERWRITE_METHODS[1];
-// await sync_files(dir_1, dir_2, compareDirs(dir_1, dir_2), SYNC_MODES[2], delete_file_method)
+// await sync_files(dir_1, dir_2, compareDirs(dir_1, dir_2), SYNC_MODES[2], DELETE_OVERWRITE_METHODS[1])
 // await sync_files(dir_3, dir_4, compareDirs(dir_3, dir_4), SYNC_MODES[1], delete_file_method)
 // await sync_files(dir_5, dir_6, compareDirs(dir_5, dir_6), SYNC_MODES[2], delete_file_method)
 // ---> takes info from BD not from UI!!!!
@@ -580,4 +642,8 @@ const dir_6 = "C:/Users/Seagulltoon/Desktop/6"
 // console.log(detectMoved(scan_folder(dir_1), scan_folder(dir_2), a))
 // console.log(a);
 
-// console.log(scan_folder(dir_1))
+// console.log(scan_folder(dir_5))
+// console.log(compareDirs(dir_5, dir_6))
+
+
+//todo DB -- ui to db -- sync to ui/db
