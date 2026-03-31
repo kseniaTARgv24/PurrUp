@@ -96,10 +96,6 @@ const SYNC_MODES = ['Two way', 'Mirror', 'Update']
 const DELETE_OVERWRITE_METHODS = ["Recycle bin", "Permanent delete", "Versioning"]
 
 async function sync_files(dir1, dir2){
-    const scheduleSettings = get_schedule_settings(); // { enabled, run_every, start_time, ignore_time_span, time_span } --> { enabled: true, run_every: '1h', start_time: 2026-03-30T12:41:54.330Z, ignore_time_span: false,  time_span: { start: '08:00', end: '20:00' }}
-    if (! isSyncAllowed(scheduleSettings, is_task_active())){
-        return;
-    }
 
     // folders data and info:
     const folder_1_list = scan_folder(dir1); //{file_relative_path: size, date}
@@ -432,8 +428,63 @@ async function sync_files(dir1, dir2){
     }
 
     console.log("after: ", compareDirs(dir1, dir2));
+
+    return Date.now();
 }
 
+async function isSyncAllowed(scheduleSettings, last_sync){
+    //todo schedule + force_start
+    //todo NB!! task_active_toggle in widget = schedule enabled in task editor!!! (shortcut)
+    //{ enabled, run_every, delay, ignore_time_span, time_span }
+
+    scheduleSettings = get_schedule_settings()
+    if (!scheduleSettings.delay){
+        scheduleSettings.delay = 0;
+    }
+    const now = Date.now();
+    const start_time = now + scheduleSettings.delay
+
+    if (! last_sync){
+        return await run_sync(); //initial first run
+    }
+
+    if (scheduleSettings.enabled){
+        if (now >= start_time){
+            if (scheduleSettings.ignore_time_span){
+                if(!(now >= scheduleSettings.time_span[0] && now <= scheduleSettings.time_span[1])){
+                    if (now < (last_sync + scheduleSettings.run_every)){
+                        return last_sync;
+                    }
+                    else {
+                        const folders = get_folders();
+                        last_sync = sync_files(folders[0], folders[2])
+                        return last_sync;
+                    }
+                }else{
+                    return last_sync; // no
+                }
+            }
+            else{
+                if (now < (last_sync + scheduleSettings.run_every)){
+                    return last_sync;
+                }
+                else {
+                    return await run_sync();
+                }
+            }
+        }
+    }
+    else {
+        return last_sync;
+    }
+
+    async function run_sync(){
+        const folders = get_folders();
+        last_sync =  await sync_files(folders[0], folders[2])
+        return last_sync;
+    }
+
+}
 
 //todo работа с бд
 // 1 task = 1 db???
@@ -446,12 +497,12 @@ async function sync_files(dir1, dir2){
 // },
 // "schedule": {
 //     "enabled": true,                // включён ли синк
-//         "run_every": 60m/60s/60h,        // запуск каждые
-//         "start_time": "2026-03-30T08:00:00", // время старта
+//         "run_every": 100m/100s/100h,        // запуск каждые
+//         "start_time": "10:10 AM", // время старта
 //         "ignore_span": {
 //         "enabled": true,
-//             "from": "23:00",
-//             "to": "06:00"
+//             "from": "10:10 AM",
+//             "to": "07:07 PM"
 //     }
 //   "folders": {
 //     "versioning_folder": "C:/Users/Seagulltoon/Desktop/dir2_version",
@@ -460,10 +511,16 @@ async function sync_files(dir1, dir2){
 
 // ТУТ
 
-
 //////////// Helper funcs ///////////////
 
 // Getting settings info :
+
+function get_folders(){
+    //from ui
+    const folders = ["C:/Users/Seagulltoon/Desktop/1", "C:/Users/Seagulltoon/Desktop/1"];
+    return folders;
+}
+
 function get_sync_mode(sync_mode = ""){
     // from db
     sync_mode = SYNC_MODES[2] //REF
@@ -489,23 +546,12 @@ function get_filter_settings() {
 function get_schedule_settings() {
     // Заглушка — позже будет из БД
     const enabled = true;
-    const run_every = "1h";                     // "30m", "1h", "1d"
-    const start_time = new Date();              // NOW — текущее время
+    const run_every = interpret_run_every_time("1h");  // "30m", "1h", "1d" --> 3600000
+    const delay = interpret_delay_until_start(new Date());         //interpret_delay_until_start("10:10 AM") --> 56117522
     const ignore_time_span = false;
-    const time_span = { start: "08:00", end: "20:00" };
+    const time_span = interpret_ignore_timespan("10:10 PM", "10:20 PM") //[ 610, 1330 ]
 
-    return { enabled, run_every, start_time, ignore_time_span, time_span };
-}
-
-function isSyncAllowed(scheduleSettings, is_task_active) {
-    //todo schedule + is_task_active
-    //{ enabled, run_every, start_time, ignore_time_span, time_span } --> { enabled: true, run_every: '1h', start_time: 2026-03-30T12:41:54.330Z, ignore_time_span: false,  time_span: { start: '08:00', end: '20:00' }}
-
-}
-
-function is_task_active(){
-    const is_task_active = true;
-    return is_task_active;
+    return { enabled, run_every, delay, ignore_time_span, time_span };
 }
 
 function get_versioning_folder(){
@@ -520,8 +566,62 @@ function get_trash_folder(){
     return trash_folder;
 }
 
-// Other helping funcs :
+function interpret_run_every_time(run_every){
+    // "30m", "1h", "1d"
+    let ms;
+    const time_value = Number(run_every.slice(0, -1));
 
+    if (run_every.endsWith("m")) {
+        ms = time_value * 60 * 1000;
+    } else if (run_every.endsWith("h")) {
+        ms = time_value * 60 * 60 * 1000;
+    } else if (run_every.endsWith("d")) {
+        ms = time_value * 24 * 60 * 60 * 1000;
+    } else {
+        console.error("WRONG UI TIME FORMAT");
+        return null;
+    }
+    return ms;
+}
+
+function interpret_delay_until_start(start_time){
+    //"07:07 AM"
+
+    if (!start_time){
+        return null;
+    }
+
+    const now = Date.now();
+
+    const uiTime = new Date(`1970-01-01 ${start_time}`);
+
+    const target = new Date(now);
+    target.setHours(uiTime.getHours());
+    target.setMinutes(uiTime.getMinutes());
+    target.setSeconds(0);
+    target.setMilliseconds(0);
+
+    if (target <= now) {
+        target.setDate(target.getDate() + 1);
+    }
+
+    return target - now;
+}
+
+function interpret_ignore_timespan(from, to){
+    // 10:10 AM; 07:07 PM
+    function parseTime(timeString) {
+        const date = new Date(`1970-01-01 ${timeString}`);
+        return date.getHours() * 60 + date.getMinutes(); // минуты от начала суток
+    }
+
+    const fromMinutes = parseTime(from);
+    const toMinutes = parseTime(to);
+
+    return [fromMinutes, toMinutes];
+}
+
+// Other helping funcs :
 async function getUniquePath(dir, fileName) {
     const ext = path.extname(fileName);     // .txt
     const name = path.basename(fileName, ext);
@@ -614,7 +714,6 @@ async function moveFiles(list, dir2) {
 }
 
 
-
 ////////////////////////////// exporting ////////////////////////////
 module.exports = {
     compareDirs,
@@ -645,5 +744,9 @@ const dir_6 = "C:/Users/Seagulltoon/Desktop/6"
 // console.log(scan_folder(dir_5))
 // console.log(compareDirs(dir_5, dir_6))
 
-
-//todo DB -- ui to db -- sync to ui/db
+// console.log(interpret_delay_until_start("10:10 AM"))
+// console.log(interpret_run_every_time("1h"))
+// console.log(interpret_ignore_timespan("10:10 AM", "10:10 PM"))
+// console.log("date now:", Date.now(), " start in (delay): ", interpret_delay_until_start(null))
+// const last_sync = await sync_files(dir_1, dir_2);
+// console.log("date now:", Date.now(), " run every: ", get_schedule_settings().run_every, "last sync: ", last_sync)

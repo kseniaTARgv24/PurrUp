@@ -10,7 +10,7 @@ document.querySelectorAll(".tab").forEach(tab => {
     });
 });
 
-///////////////////////////////// compare folders /////////////////////////////////////
+///////////////////////////////// Task Editor /////////////////////////////////////
 
 const sourceInput = document.querySelector('.path-container .path-block:first-child .path-input');
 const targetInput = document.querySelector('.path-container .path-block:last-child .path-input');
@@ -105,6 +105,77 @@ function createEmptyRow() {
 
     return row;
 }
+
+function setInputBoxFromDB(){
+    // name, dir 1, dir 2
+    //blank if new
+}
+
+// SaveTask.btn --> Save name, dirs and FSS to DB
+
+function taskEditorImportantFields(){}
+
+
+////////////////////////////////////// FSS /////////////////////////////////////
+
+function setDefaultSettingsToUI(){
+        // initial and when cancelling
+    //Include
+
+    //Exclude
+
+    // min max file size
+
+    //Sync mode + clue note
+
+    //Delete/overwrite + clue note
+
+    //Enable schedule
+
+    //run every num digit
+
+    //start time + clue note
+
+    //Ignore time span check
+
+    //timespan from to
+}
+
+function getAndSetSettingsFromDBToUI(){
+    //Include
+
+    //Exclude
+
+    // min max file size
+
+    //Sync mode + clue note
+
+    //Delete/overwrite + clue note
+
+    //Enable schedule
+
+    //run every num digit
+
+    //start time + clue note
+
+    //Ignore time span check
+
+    //timespan from to
+}
+
+function scheduleImportantFields(){}
+
+function filterImportantFields(){}
+
+function trimAndNormilizeFilterFields(){}
+
+/////////////////////////////////// Widget //////////////////////////////////////
+
+// RunTask, scheduleEnable btns
+// open task
+// new task
+
+
 
 <!--todo расивый снос строк в списке файлов-->
 
