@@ -492,8 +492,11 @@ function save_updateTaskInDB(taksName, dir1, dir2, delete_file_method, versionin
     //taksName, folders, delete_file_method, versioning_folder,  sync_mode, filter_settings, schedule_settings
     // get all from top from UI
     // check TargetFolder has "task_settings.json" (taskname+setting.json)
-    // if not-> create file
+    // if not-> create file, тут же добавить этот файл в "exclude"
     // if yes -> Update file!
+    // сделать проверку на читаемость файла (если он коррапнутый или туда кто-то чето занес- ошибка)
+    // .purrup-task.json - Лучше с точкой, чтобы было “скрыто-похоже-на-системное”.
+    //
 
     //todo работа с бд
     // taksName: "Namename",
