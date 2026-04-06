@@ -103,9 +103,9 @@ async function sync_files(dir1, dir2){
     let compare_result_list = compareDirs(dir1, dir2)  //|is in dir1 -- is in dir2 -- (if both TRUE) status (same or not)|  { file: 'b.txt', status: "in both dir's: same" }
 
     // user's sync settings
-    const sync_mode = get_sync_mode();
-    const delete_file_method = get_delete_file_method()
-    const filterSettings = get_filter_settings(); // { include, exclude, size_min, size_max } --> {include: [ '*.txt', '*.docx' ], exclude: [ '*.tmp', '*.log' ], size_min: 0, size_max: 10000000 }
+    const sync_mode = get_sync_mode_fromDB();
+    const delete_file_method = get_delete_file_method_fromDB()
+    const filterSettings = get_filter_settings_fromDB(); // { include, exclude, size_min, size_max } --> {include: [ '*.txt', '*.docx' ], exclude: [ '*.tmp', '*.log' ], size_min: 0, size_max: 10000000 }
 
     console.log("before: ", compareDirs(dir1, dir2));
 
@@ -201,7 +201,7 @@ async function sync_files(dir1, dir2){
                             case "Versioning": {
                                 const src = path.join(dir2, file.file);
 
-                                const dest = await getUniquePath(get_versioning_folder(), file.file);
+                                const dest = await getUniquePath(get_versioning_folder_fromDB(), file.file);
 
                                 await fsp.mkdir(path.dirname(dest), { recursive: true });
 
@@ -243,7 +243,7 @@ async function sync_files(dir1, dir2){
                             case "Versioning": {
                                 const src = path.join(dir1, file.file);
 
-                                const dest = await getUniquePath(get_versioning_folder(), file.file);
+                                const dest = await getUniquePath(get_versioning_folder_fromDB(), file.file);
 
                                 await fsp.mkdir(path.dirname(dest), { recursive: true });
 
@@ -304,7 +304,7 @@ async function sync_files(dir1, dir2){
                         case "Versioning": {
                             const src = path.join(dir2, file.file);
 
-                            const dest = await getUniquePath(get_versioning_folder(), file.file);
+                            const dest = await getUniquePath(get_versioning_folder_fromDB(), file.file);
 
                             await fsp.mkdir(path.dirname(dest), { recursive: true });
 
@@ -342,7 +342,7 @@ async function sync_files(dir1, dir2){
                         case "Versioning": {
                             const src = path.join(dir2, file.file);
 
-                            const dest = await getUniquePath(get_versioning_folder(), file.file);
+                            const dest = await getUniquePath(get_versioning_folder_fromDB(), file.file);
 
                             await fsp.mkdir(path.dirname(dest), { recursive: true });
 
@@ -404,7 +404,7 @@ async function sync_files(dir1, dir2){
                         case "Versioning": {
                             const src = path.join(dir2, file.file);
 
-                            const dest = await getUniquePath(get_versioning_folder(), file.file);
+                            const dest = await getUniquePath(get_versioning_folder_fromDB(), file.file);
 
                             await fsp.mkdir(path.dirname(dest), { recursive: true });
 
@@ -433,11 +433,11 @@ async function sync_files(dir1, dir2){
 }
 
 async function isSyncAllowed(scheduleSettings, last_sync){
-    //todo schedule + force_start
+    //todo schedule + force_start (ui)
     //todo NB!! task_active_toggle in widget = schedule enabled in task editor!!! (shortcut)
     //{ enabled, run_every, delay, ignore_time_span, time_span }
 
-    scheduleSettings = get_schedule_settings()
+    scheduleSettings = get_schedule_settings_fromDB()
     if (!scheduleSettings.delay){
         scheduleSettings.delay = 0;
     }
@@ -479,62 +479,76 @@ async function isSyncAllowed(scheduleSettings, last_sync){
     }
 
     async function run_sync(){
-        const folders = get_folders();
+        const folders = get_folders_fromDB();
         last_sync =  await sync_files(folders[0], folders[2])
         return last_sync;
     }
 
 }
 
-//todo работа с бд
-// 1 task = 1 db???
-// "is_task_active": true,
-// "filters": {
-//     "include": ["*.txt", "*.md"],   // файлы, которые обязательно включать
-//         "exclude": ["secret*.txt"],     // файлы, которые исключать
-//         "size_min": 0,                  // минимальный размер файла
-//         "size_max": 1048576             // максимальный размер файла
-// },
-// "schedule": {
-//     "enabled": true,                // включён ли синк
-//         "run_every": 100m/100s/100h,        // запуск каждые
-//         "start_time": "10:10 AM", // время старта
-//         "ignore_span": {
-//         "enabled": true,
-//             "from": "10:10 AM",
-//             "to": "07:07 PM"
-//     }
-//   "folders": {
-//     "versioning_folder": "C:/Users/Seagulltoon/Desktop/dir2_version",
-//     "trash_folder": "C:/Users/Seagulltoon/Desktop/Recycle Bin"
-//   }
+function saveTaskToDB(taksName, dir1, dir2, delete_file_method, versioning_folder, sync_mode, filter_settings, schedule_settings){
+    //taksName, folders, delete_file_method, versioning_folder,  sync_mode, filter_settings, schedule_settings
+    // get all from top from UI
+    // check TargetFolder has "task_settings.json" (taskname+setting.json)
+    // if not-> create file
 
-// ТУТ
+    //todo работа с бд
+    // taksName: "Namename",
+    // folders = ["C:/Users/Seagulltoon/Desktop/1", "C:/Users/Seagulltoon/Desktop/1"],
+    // delete_file_method = "Recycle bin",
+    // versioning_folder = "path"
+    // sync_mode = Two way',
+    // "filters": {
+    //     "include": ["*.txt", "*.md"],   // файлы, которые обязательно включать
+    //         "exclude": ["secret*.txt", "task_settings.json"],     // файлы, которые исключать
+    //         "size_min": 0,                  // минимальный размер файла
+    //         "size_max": 1048576             // максимальный размер файла
+    // },
+    // "schedule": {
+    //     "enabled": true,                // включён ли синк (shortcut in ui)
+    //         "run_every": 100m/100s/100h,        // запуск каждые
+    //         "start_time": "10:10 AM", // время старта
+    //         "ignore_span": {
+    //         "enabled": true,
+    //             "from": "10:10 AM",
+    //             "to": "07:07 PM"
+    //     }
+    //   "folders": {
+    //     "versioning_folder": "C:/Users/Seagulltoon/Desktop/dir2_version",
+    //     "trash_folder": "C:/Users/Seagulltoon/Desktop/Recycle Bin"
+    //   }
+}
+
+function removeTaskFromDB(){}
 
 //////////// Helper funcs ///////////////
 
-// Getting settings info :
+// Get info from DB :
 
-function get_folders(){
-    //from ui
+function get_folders_fromDB(BDFile){
+    // GET FROM DB
+    // open BDFile and read info from it
+
     const folders = ["C:/Users/Seagulltoon/Desktop/1", "C:/Users/Seagulltoon/Desktop/1"];
     return folders;
 }
 
-function get_sync_mode(sync_mode = ""){
-    // from db
+function get_sync_mode_fromDB(BDFile){
+    // GET FROM DB
     sync_mode = SYNC_MODES[2] //REF
     return sync_mode
 }
 
-function get_delete_file_method(delete_file_method = ""){
-    // from db
+function get_delete_file_method_fromDB(delete_file_method = ""){
+    // GET FROM DB
+
     delete_file_method = DELETE_OVERWRITE_METHODS[1] //REF
     return delete_file_method
 }
 
-function get_filter_settings() {
-    // Заглушка — позже будет из БД
+function get_filter_settings_fromDB() {
+    // GET FROM DB
+
     const include = ["*.txt", "*.docx"];
     const exclude = ["*.tmp", "*.log"];
     const size_min = 0;                        // (байты)
@@ -543,8 +557,10 @@ function get_filter_settings() {
     return { include, exclude, size_min, size_max };
 }
 
-function get_schedule_settings() {
-    // Заглушка — позже будет из БД
+function get_schedule_settings_fromDB() {
+    // GET FROM DB
+
+
     const enabled = true;
     const run_every = interpret_run_every_time("1h");  // "30m", "1h", "1d" --> 3600000
     const delay = interpret_delay_until_start(new Date());         //interpret_delay_until_start("10:10 AM") --> 56117522
@@ -554,17 +570,22 @@ function get_schedule_settings() {
     return { enabled, run_every, delay, ignore_time_span, time_span };
 }
 
-function get_versioning_folder(){
-    // getting it from BD
+function get_versioning_folder_fromDB(){
+    // GET FROM DB
+
     const versioning_folder = "C:/Users/Seagulltoon/Desktop/dir2_version"
     return versioning_folder;
 }
 
+// Get locally
+
 function get_trash_folder(){
-    // getting it from USER PC
+    // LOCAL
     const trash_folder = "C:/Users/Seagulltoon/Desktop/Recycle Bin"
     return trash_folder;
 }
+
+// interpret info
 
 function interpret_run_every_time(run_every){
     // "30m", "1h", "1d"
@@ -622,6 +643,7 @@ function interpret_ignore_timespan(from, to){
 }
 
 // Other helping funcs :
+
 async function getUniquePath(dir, fileName) {
     const ext = path.extname(fileName);     // .txt
     const name = path.basename(fileName, ext);
@@ -722,31 +744,22 @@ module.exports = {
 };
 
 
+
+
+
+
+
+
+
+
+
+
 /////////////////////////////// funcs tests ///////////////////////////
 
 const dir_1 = "C:/Users/Seagulltoon/Desktop/1"
 const dir_2 = "C:/Users/Seagulltoon/Desktop/2"
-const dir_3 = "C:/Users/Seagulltoon/Desktop/3"
-const dir_4 = "C:/Users/Seagulltoon/Desktop/4"
-const dir_5 = "C:/Users/Seagulltoon/Desktop/5"
-const dir_6 = "C:/Users/Seagulltoon/Desktop/6"
 
-// await sync_files(dir_1, dir_2, compareDirs(dir_1, dir_2), SYNC_MODES[2], DELETE_OVERWRITE_METHODS[1])
-// await sync_files(dir_3, dir_4, compareDirs(dir_3, dir_4), SYNC_MODES[1], delete_file_method)
-// await sync_files(dir_5, dir_6, compareDirs(dir_5, dir_6), SYNC_MODES[2], delete_file_method)
-// ---> takes info from BD not from UI!!!!
-
-// const a = compareDirs(dir_1, dir_2)
-// console.log(a);
-// console.log(detectMoved(scan_folder(dir_1), scan_folder(dir_2), a))
-// console.log(a);
-
-// console.log(scan_folder(dir_5))
-// console.log(compareDirs(dir_5, dir_6))
-
-// console.log(interpret_delay_until_start("10:10 AM"))
-// console.log(interpret_run_every_time("1h"))
-// console.log(interpret_ignore_timespan("10:10 AM", "10:10 PM"))
-// console.log("date now:", Date.now(), " start in (delay): ", interpret_delay_until_start(null))
-// const last_sync = await sync_files(dir_1, dir_2);
-// console.log("date now:", Date.now(), " run every: ", get_schedule_settings().run_every, "last sync: ", last_sync)
+//saveTaskToDB(....)
+// console.log(get_folders_fromDB(///))
+//........
+// electron . --enable-logging
