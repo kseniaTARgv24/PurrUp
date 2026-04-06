@@ -433,16 +433,18 @@ async function sync_files(dir1, dir2){
 }
 
 async function isSyncAllowed(scheduleSettings, last_sync){
-    //todo schedule + force_start (ui)
     //todo NB!! task_active_toggle in widget = schedule enabled in task editor!!! (shortcut)
-    //{ enabled, run_every, delay, ignore_time_span, time_span }
+
+    let newRunEvery = interpret_run_every_time(scheduleSettings.run_every);
+    let newDelay =    interpret_delay_until_start(scheduleSettings.delay)
+    let newTimeSpan = interpret_ignore_timespan(scheduleSettings.time_span);
 
     scheduleSettings = get_schedule_settings_fromDB()
-    if (!scheduleSettings.delay){
-        scheduleSettings.delay = 0;
+    if (!newDelay){
+        newDelay = 0;
     }
     const now = Date.now();
-    const start_time = now + scheduleSettings.delay
+    const start_time = now + newDelay
 
     if (! last_sync){
         return await run_sync(); //initial first run
@@ -451,12 +453,12 @@ async function isSyncAllowed(scheduleSettings, last_sync){
     if (scheduleSettings.enabled){
         if (now >= start_time){
             if (scheduleSettings.ignore_time_span){
-                if(!(now >= scheduleSettings.time_span[0] && now <= scheduleSettings.time_span[1])){
-                    if (now < (last_sync + scheduleSettings.run_every)){
+                if(!(now >= newTimeSpan[0] && now <= newTimeSpan[1])){
+                    if (now < (last_sync + newRunEvery)){
                         return last_sync;
                     }
                     else {
-                        const folders = get_folders();
+                        const folders = get_folders_fromDB();
                         last_sync = sync_files(folders[0], folders[2])
                         return last_sync;
                     }
@@ -465,7 +467,7 @@ async function isSyncAllowed(scheduleSettings, last_sync){
                 }
             }
             else{
-                if (now < (last_sync + scheduleSettings.run_every)){
+                if (now < (last_sync + newRunEvery)){
                     return last_sync;
                 }
                 else {
@@ -486,11 +488,12 @@ async function isSyncAllowed(scheduleSettings, last_sync){
 
 }
 
-function saveTaskToDB(taksName, dir1, dir2, delete_file_method, versioning_folder, sync_mode, filter_settings, schedule_settings){
+function save_updateTaskInDB(taksName, dir1, dir2, delete_file_method, versioning_folder, sync_mode, filter_settings, schedule_settings){
     //taksName, folders, delete_file_method, versioning_folder,  sync_mode, filter_settings, schedule_settings
     // get all from top from UI
     // check TargetFolder has "task_settings.json" (taskname+setting.json)
     // if not-> create file
+    // if yes -> Update file!
 
     //todo работа с бд
     // taksName: "Namename",
@@ -552,7 +555,7 @@ function get_filter_settings_fromDB() {
     const include = ["*.txt", "*.docx"];
     const exclude = ["*.tmp", "*.log"];
     const size_min = 0;                        // (байты)
-    const size_max = 10_000_000;               // (байты)
+    const size_max = 10000000;               // (байты)
 
     return { include, exclude, size_min, size_max };
 }
@@ -562,10 +565,10 @@ function get_schedule_settings_fromDB() {
 
 
     const enabled = true;
-    const run_every = interpret_run_every_time("1h");  // "30m", "1h", "1d" --> 3600000
-    const delay = interpret_delay_until_start(new Date());         //interpret_delay_until_start("10:10 AM") --> 56117522
+    const run_every = "1h";  // "30m", "1h", "1d"
+    const delay = new Date();         //interpret_delay_until_start("10:10 AM")
     const ignore_time_span = false;
-    const time_span = interpret_ignore_timespan("10:10 PM", "10:20 PM") //[ 610, 1330 ]
+    const time_span = ["10:10 PM", "10:20 PM"]
 
     return { enabled, run_every, delay, ignore_time_span, time_span };
 }
