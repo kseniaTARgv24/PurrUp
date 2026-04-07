@@ -764,17 +764,66 @@ function get_filter_settings_fromDB(DBFile) {
     }
 }
 
-function get_schedule_settings_fromDB() {
-    // GET FROM DB
+function get_schedule_settings_fromDB(DBFile) {
+    const DB_FILE_NAME = ".purrup-task.json";
+    const defaultDbFile = path.join(process.cwd(), DB_FILE_NAME);
+    let dbFilePath;
 
+    if (!DBFile) {
+        dbFilePath = defaultDbFile;
+    } else if (path.basename(DBFile) === DB_FILE_NAME) {
+        dbFilePath = DBFile;
+    } else {
+        dbFilePath = path.join(DBFile, DB_FILE_NAME);
+    }
 
-    const enabled = true;
-    const run_every = "1h";  // "30m", "1h", "1d"
-    const delay = new Date();         //interpret_delay_until_start("10:10 AM")
-    const ignore_time_span = false;
-    const time_span = ["10:10 PM", "10:20 PM"]
+    const fallbackSchedule = {
+        enabled: false,
+        run_every: "1h",      // "30m", "1h", "1d"
+        delay: null,          // "07:07 AM" or null
+        ignore_time_span: false,
+        time_span: []         // ["10:10 PM", "10:20 PM"]
+    };
 
-    return { enabled, run_every, delay, ignore_time_span, time_span };
+    if (!fs.existsSync(dbFilePath)) {
+        console.error(`Task DB file not found: ${dbFilePath}`);
+        return fallbackSchedule;
+    }
+
+    try {
+        const raw = fs.readFileSync(dbFilePath, "utf8");
+        const config = JSON.parse(raw);
+        const schedule = config.schedule || {};
+
+        const enabled = typeof schedule.enabled === "boolean"
+            ? schedule.enabled
+            : fallbackSchedule.enabled;
+
+        const run_every = (typeof schedule.run_every === "string" && /^[1-9]\d*[mhd]$/.test(schedule.run_every))
+            ? schedule.run_every
+            : fallbackSchedule.run_every;
+
+        const delay = typeof schedule.delay === "string" && schedule.delay.trim().length > 0
+            ? schedule.delay.trim()
+            : fallbackSchedule.delay;
+
+        const ignore_time_span = typeof schedule.ignore_time_span === "boolean"
+            ? schedule.ignore_time_span
+            : fallbackSchedule.ignore_time_span;
+
+        const time_span = (
+            Array.isArray(schedule.time_span) &&
+            schedule.time_span.length === 2 &&
+            schedule.time_span.every(v => typeof v === "string" && v.trim().length > 0)
+        )
+            ? [schedule.time_span[0].trim(), schedule.time_span[1].trim()]
+            : fallbackSchedule.time_span;
+
+        return { enabled, run_every, delay, ignore_time_span, time_span };
+    } catch (err) {
+        console.error(`Failed to read schedule settings from task DB (${dbFilePath}):`, err);
+        return fallbackSchedule;
+    }
 }
 
 function get_versioning_folder_fromDB(){
@@ -952,7 +1001,8 @@ module.exports = {
     removeTaskFromDB,
     get_sync_mode_fromDB,
     get_delete_file_method_fromDB,
-    get_filter_settings_fromDB
+    get_filter_settings_fromDB,
+    get_schedule_settings_fromDB
 };
 
 
@@ -1010,3 +1060,10 @@ const dir_2 = "C:/Users/xicey/Desktop/2"
 // --------------------------------
 // 2 variant
 // console.log(get_filter_settings_fromDB('C:/Users/xicey/Desktop/2'))
+
+// get_schedule_settings_fromDB check
+// 1 variant
+// console.log(get_schedule_settings_fromDB('C:/Users/xicey/Desktop/2/.purrup-task.json'))
+// --------------------------------
+// 2 variant
+// console.log(get_schedule_settings_fromDB('C:/Users/xicey/Desktop/2'))
