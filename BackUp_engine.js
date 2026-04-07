@@ -572,15 +572,38 @@ async function save_updateTaskInDB(taskName, dir1, dir2, delete_file_method, ver
     return dbFilePath;
 }
 
-function removeTaskFromDB(){}
+async function removeTaskFromDB(dirOrDbFile){
+    const DB_FILE_NAME = ".purrup-task.json";
+
+    let dbFilePath;
+    if (!dirOrDbFile) {
+        dbFilePath = path.join(process.cwd(), DB_FILE_NAME);
+    } else if (path.basename(dirOrDbFile) === DB_FILE_NAME) {
+        dbFilePath = dirOrDbFile;
+    } else {
+        dbFilePath = path.join(dirOrDbFile, DB_FILE_NAME);
+    }
+
+    if (!fs.existsSync(dbFilePath)) {
+        return false;
+    }
+
+    try {
+        await fsp.unlink(dbFilePath);
+        return true;
+    } catch (err) {
+        console.error(`Failed to remove task DB file (${dbFilePath}):`, err);
+        throw err;
+    }
+}
 
 //////////// Helper funcs ///////////////
 
 // Get info from DB :
 
-function get_folders_fromDB(BDFile){
+function get_folders_fromDB(DBFile){
     const defaultDbFile = path.join(process.cwd(), ".purrup-task.json");
-    const dbFilePath = BDFile || defaultDbFile;
+    const dbFilePath = DBFile || defaultDbFile;
 
     if (!fs.existsSync(dbFilePath)) {
         console.error(`Task DB file not found: ${dbFilePath}`);
@@ -607,7 +630,7 @@ function get_folders_fromDB(BDFile){
     }
 }
 
-function get_sync_mode_fromDB(BDFile){
+function get_sync_mode_fromDB(DBFile){
     // GET FROM DB
     sync_mode = SYNC_MODES[2] //REF
     return sync_mode
@@ -815,7 +838,8 @@ module.exports = {
     compareDirs,
     scan_folder,
     sync_files,
-    save_updateTaskInDB
+    save_updateTaskInDB,
+    removeTaskFromDB
 };
 
 
@@ -839,6 +863,16 @@ const dir_2 = "C:/Users/xicey/Desktop/2"
 //........
 // electron . --enable-logging
 
-console.log(
-    get_folders_fromDB("C:/Users/xicey/Desktop/2/.purrup-task.json")
-  );
+//console.log(
+//   get_folders_fromDB("C:/Users/xicey/Desktop/2/.purrup-task.json")
+//  );
+
+// 1 VARIANT: delete file directly
+//removeTaskFromDB("C:/Users/xicey/Desktop/2/.purrup-task.json")
+//  .then((result) => console.log("deleted:", result))
+//  .catch((err) => console.error(err));
+
+// 2 VARIANT: delete file from folder
+//  removeTaskFromDB("C:/Users/xicey/Desktop/2/")
+//  .then((result) => console.log("deleted:", result))
+//  .catch((err) => console.error(err));
