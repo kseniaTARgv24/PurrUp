@@ -672,11 +672,46 @@ function get_sync_mode_fromDB(DBFile){
     }
 }
 
-function get_delete_file_method_fromDB(delete_file_method = ""){
-    // GET FROM DB
+function get_delete_file_method_fromDB(DBFile){
+    const DB_FILE_NAME = ".purrup-task.json";
+    const defaultDbFile = path.join(process.cwd(), DB_FILE_NAME);
+    let dbFilePath;
 
-    delete_file_method = DELETE_OVERWRITE_METHODS[1] //REF
-    return delete_file_method
+    if (!DBFile) {
+        dbFilePath = defaultDbFile;
+    } else if (path.basename(DBFile) === DB_FILE_NAME) {
+        dbFilePath = DBFile;
+    } else {
+        dbFilePath = path.join(DBFile, DB_FILE_NAME);
+    }
+
+    const fallbackMethod = DELETE_OVERWRITE_METHODS[1];
+
+    if (!fs.existsSync(dbFilePath)) {
+        console.error(`Task DB file not found: ${dbFilePath}`);
+        return fallbackMethod;
+    }
+
+    try {
+        const raw = fs.readFileSync(dbFilePath, "utf8");
+        const config = JSON.parse(raw);
+        const delete_file_method = config.delete_file_method;
+
+        if (typeof delete_file_method !== "string") {
+            console.error("Invalid task DB format: 'delete_file_method' must be a string.");
+            return fallbackMethod;
+        }
+
+        if (!DELETE_OVERWRITE_METHODS.includes(delete_file_method)) {
+            console.error(`Invalid delete file method in task DB: ${delete_file_method}. Falling back to default.`);
+            return fallbackMethod;
+        }
+
+        return delete_file_method;
+    } catch (err) {
+        console.error(`Failed to read delete file method from task DB (${dbFilePath}):`, err);
+        return fallbackMethod;
+    }
 }
 
 function get_filter_settings_fromDB() {
@@ -876,7 +911,8 @@ module.exports = {
     sync_files,
     save_updateTaskInDB,
     removeTaskFromDB,
-    get_sync_mode_fromDB
+    get_sync_mode_fromDB,
+    get_delete_file_method_fromDB
 };
 
 
@@ -920,3 +956,10 @@ const dir_2 = "C:/Users/xicey/Desktop/2"
 // --------------------------------
 // 2 variant
 // console.log(get_sync_mode_fromDB('C:/Users/xicey/Desktop/2'))
+
+// get_delete_file_method_fromDB check
+// 1 variant
+// console.log(get_delete_file_method_fromDB('C:/Users/xicey/Desktop/2/.purrup-task.json'))
+// --------------------------------
+// 2 variant
+// console.log(get_delete_file_method_fromDB('C:/Users/xicey/Desktop/2'))
