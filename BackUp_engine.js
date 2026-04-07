@@ -579,11 +579,32 @@ function removeTaskFromDB(){}
 // Get info from DB :
 
 function get_folders_fromDB(BDFile){
-    // GET FROM DB
-    // open BDFile and read info from it
+    const defaultDbFile = path.join(process.cwd(), ".purrup-task.json");
+    const dbFilePath = BDFile || defaultDbFile;
 
-    const folders = ["C:/Users/Seagulltoon/Desktop/1", "C:/Users/Seagulltoon/Desktop/1"];
-    return folders;
+    if (!fs.existsSync(dbFilePath)) {
+        console.error(`Task DB file not found: ${dbFilePath}`);
+        return [];
+    }
+
+    try {
+        const raw = fs.readFileSync(dbFilePath, "utf8");
+        const config = JSON.parse(raw);
+
+        if (!Array.isArray(config.folders)) {
+            console.error("Invalid task DB format: 'folders' must be an array.");
+            return [];
+        }
+
+        const folders = config.folders
+            .filter(folder => typeof folder === "string" && folder.trim().length > 0)
+            .map(normalize);
+
+        return folders;
+    } catch (err) {
+        console.error(`Failed to read folders from task DB (${dbFilePath}):`, err);
+        return [];
+    }
 }
 
 function get_sync_mode_fromDB(BDFile){
@@ -817,3 +838,7 @@ const dir_2 = "C:/Users/xicey/Desktop/2"
 // console.log(get_folders_fromDB(///))
 //........
 // electron . --enable-logging
+
+console.log(
+    get_folders_fromDB("C:/Users/xicey/Desktop/2/.purrup-task.json")
+  );
