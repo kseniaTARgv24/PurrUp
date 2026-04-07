@@ -714,15 +714,54 @@ function get_delete_file_method_fromDB(DBFile){
     }
 }
 
-function get_filter_settings_fromDB() {
-    // GET FROM DB
+function get_filter_settings_fromDB(DBFile) {
+    const DB_FILE_NAME = ".purrup-task.json";
+    const defaultDbFile = path.join(process.cwd(), DB_FILE_NAME);
+    let dbFilePath;
 
-    const include = ["*.txt", "*.docx"];
-    const exclude = ["*.tmp", "*.log"];
-    const size_min = 0;                        // (байты)
-    const size_max = 10000000;               // (байты)
+    if (!DBFile) {
+        dbFilePath = defaultDbFile;
+    } else if (path.basename(DBFile) === DB_FILE_NAME) {
+        dbFilePath = DBFile;
+    } else {
+        dbFilePath = path.join(DBFile, DB_FILE_NAME);
+    }
 
-    return { include, exclude, size_min, size_max };
+    const fallbackFilters = {
+        include: ["*"],
+        exclude: [],
+        size_min: 0,
+        size_max: 0
+    };
+
+    if (!fs.existsSync(dbFilePath)) {
+        console.error(`Task DB file not found: ${dbFilePath}`);
+        return fallbackFilters;
+    }
+
+    try {
+        const raw = fs.readFileSync(dbFilePath, "utf8");
+        const config = JSON.parse(raw);
+        const filters = config.filters || {};
+
+        const include = Array.isArray(filters.include)
+            ? filters.include.filter(v => typeof v === "string")
+            : fallbackFilters.include;
+        const exclude = Array.isArray(filters.exclude)
+            ? filters.exclude.filter(v => typeof v === "string")
+            : fallbackFilters.exclude;
+        const size_min = (typeof filters.size_min === "number" && Number.isFinite(filters.size_min))
+            ? Math.max(0, filters.size_min)
+            : fallbackFilters.size_min;
+        const size_max = (typeof filters.size_max === "number" && Number.isFinite(filters.size_max))
+            ? Math.max(0, filters.size_max)
+            : fallbackFilters.size_max;
+
+        return { include, exclude, size_min, size_max };
+    } catch (err) {
+        console.error(`Failed to read filter settings from task DB (${dbFilePath}):`, err);
+        return fallbackFilters;
+    }
 }
 
 function get_schedule_settings_fromDB() {
@@ -912,7 +951,8 @@ module.exports = {
     save_updateTaskInDB,
     removeTaskFromDB,
     get_sync_mode_fromDB,
-    get_delete_file_method_fromDB
+    get_delete_file_method_fromDB,
+    get_filter_settings_fromDB
 };
 
 
@@ -963,3 +1003,10 @@ const dir_2 = "C:/Users/xicey/Desktop/2"
 // --------------------------------
 // 2 variant
 // console.log(get_delete_file_method_fromDB('C:/Users/xicey/Desktop/2'))
+
+// get_filter_settings_fromDB check
+// 1 variant
+// console.log(get_filter_settings_fromDB('C:/Users/xicey/Desktop/2/.purrup-task.json'))
+// --------------------------------
+// 2 variant
+// console.log(get_filter_settings_fromDB('C:/Users/xicey/Desktop/2'))
