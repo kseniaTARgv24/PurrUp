@@ -488,12 +488,28 @@ async function isSyncAllowed(scheduleSettings, last_sync){
 
 }
 
-function save_updateTaskInDB(taksName, dir1, dir2, delete_file_method, versioning_folder, sync_mode, filter_settings, schedule_settings){
+function saveTaskInTaskList(taskName){
+    const TaskListPath = path.join(process.cwd(), "data", "tasks_list.json");
+    const raw = fs.readFileSync(TaskListPath, "utf-8");
+    const taskList = JSON.parse(raw).tasks;
+    if (!taskList.includes(taskName)){
+        taskList.push(taskName);
+        fs.writeFileSync(TaskListPath, JSON.stringify(taskList, null, 2)); //Это красивое форматирование файла:
+        return true;
+    }
+    else{
+        return false;
+    }
+}
+
+//NO NAME UPD
+
+function save_updateTaskInDB(taskName, dir1, dir2, delete_file_method, versioning_folder, sync_mode, filter_settings, schedule_settings){
     //taksName, folders, delete_file_method, versioning_folder,  sync_mode, filter_settings, schedule_settings
     // get all from top from UI
     // check TargetFolder has "task_settings.json" (taskname+setting.json)
     // if not-> create file, тут же добавить этот файл в "exclude"
-    // if yes -> Update file!
+    // if yes -> Update file! +update taskname+setting.json
     // сделать проверку на читаемость файла (если он коррапнутый или туда кто-то чето занес- ошибка)
     // .purrup-task.json - Лучше с точкой, чтобы было “скрыто-похоже-на-системное”.
     //
@@ -769,3 +785,5 @@ const dir_2 = "C:/Users/Seagulltoon/Desktop/2"
 // console.log(get_folders_fromDB(///))
 //........
 // electron . --enable-logging
+
+console.log(saveTaskInTaskList("popopipi"))
