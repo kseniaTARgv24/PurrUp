@@ -495,17 +495,27 @@ async function save_updateTaskInDB(taskName, dir1, dir2, delete_file_method, ver
     // - delete_file_method: "Recycle bin" | "Permanent delete" | "Versioning"
     // - versioning_folder: "C:/.../dir2_version"
     // - sync_mode: "Two way" | "Mirror" | "Update"
-    // - filters: { include: ["*.txt"], exclude: ["secret*.txt", ".purrup-task.json"], size_min, size_max }
+    // - filters: { include: ["*.txt"], exclude: ["secret*.txt", "<taskname>-settings.json"], size_min, size_max }
     // - schedule: { enabled, run_every, delay/start_time, ignore_time_span/time_span ... }
     //
     // Storage:
-    // - Store task settings as JSON in the target folder (dir2) as `.purrup-task.json`
+    // - Store task settings as JSON in the target folder (dir2) as `<taskname>-settings.json`
     // - If the file exists: validate JSON and update it
     // - If corrupted/invalid: recreate
-    // - Ensure `.purrup-task.json` is always in filters.exclude
+    // - Ensure the generated `<taskname>-settings.json` is always in filters.exclude
     // - Trash folder is not stored here (it is resolved locally)
 
-    const DB_FILE_NAME = ".purrup-task.json";
+    function getTaskSettingsFileName(name) {
+        const safeBase = String(name || "")
+            .trim()
+            .replace(/[<>:"/\\|?*\x00-\x1F]/g, "_")
+            .replace(/\s+/g, "_");
+
+        const normalizedBase = safeBase.length > 0 ? safeBase : "task";
+        return `${normalizedBase}-settings.json`;
+    }
+
+    const DB_FILE_NAME = getTaskSettingsFileName(taskName);
 
     // Bind settings to the task's target folder
     const targetFolder = dir2;
@@ -573,16 +583,7 @@ async function save_updateTaskInDB(taskName, dir1, dir2, delete_file_method, ver
 }
 
 async function removeTaskFromDB(dirOrDbFile){
-    const DB_FILE_NAME = ".purrup-task.json";
-
-    let dbFilePath;
-    if (!dirOrDbFile) {
-        dbFilePath = path.join(process.cwd(), DB_FILE_NAME);
-    } else if (path.basename(dirOrDbFile) === DB_FILE_NAME) {
-        dbFilePath = dirOrDbFile;
-    } else {
-        dbFilePath = path.join(dirOrDbFile, DB_FILE_NAME);
-    }
+    const dbFilePath = resolveTaskDbFilePath(dirOrDbFile);
 
     if (!fs.existsSync(dbFilePath)) {
         return false;
@@ -599,11 +600,41 @@ async function removeTaskFromDB(dirOrDbFile){
 
 //////////// Helper funcs ///////////////
 
+function isTaskSettingsFileName(fileName) {
+    return typeof fileName === "string" && fileName.toLowerCase().endsWith("-settings.json");
+}
+
+function resolveTaskDbFilePath(dirOrDbFile) {
+    // If an explicit JSON path is passed, use it directly.
+    if (typeof dirOrDbFile === "string" && path.extname(dirOrDbFile).toLowerCase() === ".json") {
+        return dirOrDbFile;
+    }
+
+    const baseDir = dirOrDbFile || process.cwd();
+
+    try {
+        if (fs.existsSync(baseDir)) {
+            const settingsFiles = fs.readdirSync(baseDir, { withFileTypes: true })
+                .filter(entry => entry.isFile() && isTaskSettingsFileName(entry.name))
+                .map(entry => entry.name)
+                .sort((a, b) => a.localeCompare(b));
+
+            if (settingsFiles.length > 0) {
+                return path.join(baseDir, settingsFiles[0]);
+            }
+        }
+    } catch (err) {
+        console.error(`Failed to resolve task DB file in ${baseDir}:`, err);
+    }
+
+    // Default file name when no task settings file exists yet.
+    return path.join(baseDir, "task-settings.json");
+}
+
 // Get info from DB :
 
 function get_folders_fromDB(DBFile){
-    const defaultDbFile = path.join(process.cwd(), ".purrup-task.json");
-    const dbFilePath = DBFile || defaultDbFile;
+    const dbFilePath = resolveTaskDbFilePath(DBFile);
 
     if (!fs.existsSync(dbFilePath)) {
         console.error(`Task DB file not found: ${dbFilePath}`);
@@ -631,17 +662,7 @@ function get_folders_fromDB(DBFile){
 }
 
 function get_sync_mode_fromDB(DBFile){
-    const DB_FILE_NAME = ".purrup-task.json";
-    const defaultDbFile = path.join(process.cwd(), DB_FILE_NAME);
-    let dbFilePath;
-
-    if (!DBFile) {
-        dbFilePath = defaultDbFile;
-    } else if (path.basename(DBFile) === DB_FILE_NAME) {
-        dbFilePath = DBFile;
-    } else {
-        dbFilePath = path.join(DBFile, DB_FILE_NAME);
-    }
+    const dbFilePath = resolveTaskDbFilePath(DBFile);
 
     const fallbackMode = SYNC_MODES[2];
 
@@ -673,17 +694,7 @@ function get_sync_mode_fromDB(DBFile){
 }
 
 function get_delete_file_method_fromDB(DBFile){
-    const DB_FILE_NAME = ".purrup-task.json";
-    const defaultDbFile = path.join(process.cwd(), DB_FILE_NAME);
-    let dbFilePath;
-
-    if (!DBFile) {
-        dbFilePath = defaultDbFile;
-    } else if (path.basename(DBFile) === DB_FILE_NAME) {
-        dbFilePath = DBFile;
-    } else {
-        dbFilePath = path.join(DBFile, DB_FILE_NAME);
-    }
+    const dbFilePath = resolveTaskDbFilePath(DBFile);
 
     const fallbackMethod = DELETE_OVERWRITE_METHODS[1];
 
@@ -715,17 +726,7 @@ function get_delete_file_method_fromDB(DBFile){
 }
 
 function get_filter_settings_fromDB(DBFile) {
-    const DB_FILE_NAME = ".purrup-task.json";
-    const defaultDbFile = path.join(process.cwd(), DB_FILE_NAME);
-    let dbFilePath;
-
-    if (!DBFile) {
-        dbFilePath = defaultDbFile;
-    } else if (path.basename(DBFile) === DB_FILE_NAME) {
-        dbFilePath = DBFile;
-    } else {
-        dbFilePath = path.join(DBFile, DB_FILE_NAME);
-    }
+    const dbFilePath = resolveTaskDbFilePath(DBFile);
 
     const fallbackFilters = {
         include: ["*"],
@@ -765,17 +766,7 @@ function get_filter_settings_fromDB(DBFile) {
 }
 
 function get_schedule_settings_fromDB(DBFile) {
-    const DB_FILE_NAME = ".purrup-task.json";
-    const defaultDbFile = path.join(process.cwd(), DB_FILE_NAME);
-    let dbFilePath;
-
-    if (!DBFile) {
-        dbFilePath = defaultDbFile;
-    } else if (path.basename(DBFile) === DB_FILE_NAME) {
-        dbFilePath = DBFile;
-    } else {
-        dbFilePath = path.join(DBFile, DB_FILE_NAME);
-    }
+    const dbFilePath = resolveTaskDbFilePath(DBFile);
 
     const fallbackSchedule = {
         enabled: false,
@@ -827,17 +818,7 @@ function get_schedule_settings_fromDB(DBFile) {
 }
 
 function get_versioning_folder_fromDB(DBFile) {
-    const DB_FILE_NAME = ".purrup-task.json";
-    const defaultDbFile = path.join(process.cwd(), DB_FILE_NAME);
-    let dbFilePath;
-
-    if (!DBFile) {
-        dbFilePath = defaultDbFile;
-    } else if (path.basename(DBFile) === DB_FILE_NAME) {
-        dbFilePath = DBFile;
-    } else {
-        dbFilePath = path.join(DBFile, DB_FILE_NAME);
-    }
+    const dbFilePath = resolveTaskDbFilePath(DBFile);
 
     const fallbackVersioningFolder = normalize(path.join(path.dirname(dbFilePath), ".purrup-versioning"));
 
@@ -1062,53 +1043,56 @@ const dir_2 = "C:/Users/xicey/Desktop/2"
 
 //////////////////////////////////////////////////////////////////////
 
+// create db file example
+// node -e "const e=require('./BackUp_engine.js'); (async()=>{ const p=await e.save_updateTaskInDB('backup docs','C:/Users/xicey/Desktop/1','C:/Users/xicey/Desktop/2','Versioning','C:/Users/xicey/Desktop/2_versioning','Two way',{include:['*'],exclude:[],size_min:0,size_max:0},{enabled:false,run_every:'1h',delay:null,ignore_time_span:false,time_span:[]}); console.log('DB file:', p); })().catch(console.error)"
+
 // get_foldersfromDB check
 //   console.log(
-//   get_folders_fromDB("C:/Users/xicey/Desktop/2/.purrup-task.json")
+//   get_folders_fromDB("C:/Users/xicey/Desktop/2/backup_docs-settings.json")
 //  );
 
 // removeTaskFromDB check
 // 1 VARIANT: delete file directly
-//  removeTaskFromDB("C:/Users/xicey/Desktop/2/.purrup-task.json")
+//  removeTaskFromDB("C:/Users/xicey/Desktop/2/backup_docs-settings.json")
 //  .then((result) => console.log("deleted:", result))
 //  .catch((err) => console.error(err));
 // --------------------------------
-// 2 VARIANT: delete file from folder
+// 2 VARIANT: delete file by folder (auto-detects *-settings.json)
 //  removeTaskFromDB("C:/Users/xicey/Desktop/2/")
 //  .then((result) => console.log("deleted:", result))
 //  .catch((err) => console.error(err));
 
 // get_sync_mode_fromDB check
 // 1 variant
-// console.log(get_sync_mode_fromDB('C:/Users/xicey/Desktop/2/.purrup-task.json'))
+// console.log(get_sync_mode_fromDB('C:/Users/xicey/Desktop/2/backup_docs-settings.json'))
 // --------------------------------
 // 2 variant
 // console.log(get_sync_mode_fromDB('C:/Users/xicey/Desktop/2'))
 
 // get_delete_file_method_fromDB check
 // 1 variant
-// console.log(get_delete_file_method_fromDB('C:/Users/xicey/Desktop/2/.purrup-task.json'))
+// console.log(get_delete_file_method_fromDB('C:/Users/xicey/Desktop/2/backup_docs-settings.json'))
 // --------------------------------
 // 2 variant
 // console.log(get_delete_file_method_fromDB('C:/Users/xicey/Desktop/2'))
 
 // get_filter_settings_fromDB check
 // 1 variant
-// console.log(get_filter_settings_fromDB('C:/Users/xicey/Desktop/2/.purrup-task.json'))
+// console.log(get_filter_settings_fromDB('C:/Users/xicey/Desktop/2/backup_docs-settings.json'))
 // --------------------------------
 // 2 variant
 // console.log(get_filter_settings_fromDB('C:/Users/xicey/Desktop/2'))
 
 // get_schedule_settings_fromDB check
 // 1 variant
-// console.log(get_schedule_settings_fromDB('C:/Users/xicey/Desktop/2/.purrup-task.json'))
+// console.log(get_schedule_settings_fromDB('C:/Users/xicey/Desktop/2/backup_docs-settings.json'))
 // --------------------------------
 // 2 variant
 // console.log(get_schedule_settings_fromDB('C:/Users/xicey/Desktop/2'))
 
 // get_versioning_folder_fromDB check
 // 1 variant
-// console.log(get_versioning_folder_fromDB('C:/Users/xicey/Desktop/2/.purrup-task.json'))
+// console.log(get_versioning_folder_fromDB('C:/Users/xicey/Desktop/2/backup_docs-settings.json'))
 // --------------------------------
 // 2 variant
 // console.log(get_versioning_folder_fromDB('C:/Users/xicey/Desktop/2'))
