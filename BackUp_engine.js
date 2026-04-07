@@ -826,11 +826,48 @@ function get_schedule_settings_fromDB(DBFile) {
     }
 }
 
-function get_versioning_folder_fromDB(){
-    // GET FROM DB
+function get_versioning_folder_fromDB(DBFile) {
+    const DB_FILE_NAME = ".purrup-task.json";
+    const defaultDbFile = path.join(process.cwd(), DB_FILE_NAME);
+    let dbFilePath;
 
-    const versioning_folder = "C:/Users/Seagulltoon/Desktop/dir2_version"
-    return versioning_folder;
+    if (!DBFile) {
+        dbFilePath = defaultDbFile;
+    } else if (path.basename(DBFile) === DB_FILE_NAME) {
+        dbFilePath = DBFile;
+    } else {
+        dbFilePath = path.join(DBFile, DB_FILE_NAME);
+    }
+
+    const fallbackVersioningFolder = normalize(path.join(path.dirname(dbFilePath), ".purrup-versioning"));
+
+    if (!fs.existsSync(dbFilePath)) {
+        console.error(`Task DB file not found: ${dbFilePath}. Using fallback versioning folder.`);
+        return fallbackVersioningFolder;
+    }
+
+    try {
+        const raw = fs.readFileSync(dbFilePath, "utf8");
+        const config = JSON.parse(raw);
+
+        const direct = typeof config.versioning_folder === "string" ? config.versioning_folder.trim() : "";
+        const fromMeta = (
+            config.folders_meta &&
+            typeof config.folders_meta.versioning_folder === "string"
+        ) ? config.folders_meta.versioning_folder.trim() : "";
+
+        const versioningFolder = direct || fromMeta;
+
+        if (!versioningFolder) {
+            console.error("Versioning folder is not set in task DB. Using fallback versioning folder.");
+            return fallbackVersioningFolder;
+        }
+
+        return normalize(versioningFolder);
+    } catch (err) {
+        console.error(`Failed to read versioning folder from task DB (${dbFilePath}):`, err);
+        return fallbackVersioningFolder;
+    }
 }
 
 // Get locally
@@ -1002,7 +1039,8 @@ module.exports = {
     get_sync_mode_fromDB,
     get_delete_file_method_fromDB,
     get_filter_settings_fromDB,
-    get_schedule_settings_fromDB
+    get_schedule_settings_fromDB,
+    get_versioning_folder_fromDB
 };
 
 
@@ -1067,3 +1105,10 @@ const dir_2 = "C:/Users/xicey/Desktop/2"
 // --------------------------------
 // 2 variant
 // console.log(get_schedule_settings_fromDB('C:/Users/xicey/Desktop/2'))
+
+// get_versioning_folder_fromDB check
+// 1 variant
+// console.log(get_versioning_folder_fromDB('C:/Users/xicey/Desktop/2/.purrup-task.json'))
+// --------------------------------
+// 2 variant
+// console.log(get_versioning_folder_fromDB('C:/Users/xicey/Desktop/2'))
