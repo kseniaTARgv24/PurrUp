@@ -488,41 +488,88 @@ async function isSyncAllowed(scheduleSettings, last_sync){
 
 }
 
-function save_updateTaskInDB(taksName, dir1, dir2, delete_file_method, versioning_folder, sync_mode, filter_settings, schedule_settings){
-    //taksName, folders, delete_file_method, versioning_folder,  sync_mode, filter_settings, schedule_settings
-    // get all from top from UI
-    // check TargetFolder has "task_settings.json" (taskname+setting.json)
-    // if not-> create file, тут же добавить этот файл в "exclude"
-    // if yes -> Update file!
-    // сделать проверку на читаемость файла (если он коррапнутый или туда кто-то чето занес- ошибка)
-    // .purrup-task.json - Лучше с точкой, чтобы было “скрыто-похоже-на-системное”.
+async function save_updateTaskInDB(taskName, dir1, dir2, delete_file_method, versioning_folder, sync_mode, filter_settings, schedule_settings){
+    // Task settings format:
+    // - taskName: "Namename"
+    // - folders: ["C:/.../1", "C:/.../2"]
+    // - delete_file_method: "Recycle bin" | "Permanent delete" | "Versioning"
+    // - versioning_folder: "C:/.../dir2_version"
+    // - sync_mode: "Two way" | "Mirror" | "Update"
+    // - filters: { include: ["*.txt"], exclude: ["secret*.txt", ".purrup-task.json"], size_min, size_max }
+    // - schedule: { enabled, run_every, delay/start_time, ignore_time_span/time_span ... }
     //
+    // Storage:
+    // - Store task settings as JSON in the target folder (dir2) as `.purrup-task.json`
+    // - If the file exists: validate JSON and update it
+    // - If corrupted/invalid: recreate
+    // - Ensure `.purrup-task.json` is always in filters.exclude
+    // - Trash folder is not stored here (it is resolved locally)
 
-    //todo работа с бд
-    // taksName: "Namename",
-    // folders = ["C:/Users/Seagulltoon/Desktop/1", "C:/Users/Seagulltoon/Desktop/1"],
-    // delete_file_method = "Recycle bin",
-    // versioning_folder = "path"
-    // sync_mode = Two way',
-    // "filters": {
-    //     "include": ["*.txt", "*.md"],   // файлы, которые обязательно включать
-    //         "exclude": ["secret*.txt", "task_settings.json"],     // файлы, которые исключать
-    //         "size_min": 0,                  // минимальный размер файла
-    //         "size_max": 1048576             // максимальный размер файла
-    // },
-    // "schedule": {
-    //     "enabled": true,                // включён ли синк (shortcut in ui)
-    //         "run_every": 100m/100s/100h,        // запуск каждые
-    //         "start_time": "10:10 AM", // время старта
-    //         "ignore_span": {
-    //         "enabled": true,
-    //             "from": "10:10 AM",
-    //             "to": "07:07 PM"
-    //     }
-    //   "folders": {
-    //     "versioning_folder": "C:/Users/Seagulltoon/Desktop/dir2_version",
-    //     "trash_folder": "C:/Users/Seagulltoon/Desktop/Recycle Bin"
-    //   }
+    const DB_FILE_NAME = ".purrup-task.json";
+
+    // Bind settings to the task's target folder
+    const targetFolder = dir2;
+    const dbFilePath = path.join(targetFolder, DB_FILE_NAME);
+
+    // Normalize input paths
+    const folders = [normalize(dir1), normalize(dir2)];
+    const normVersioningFolder = versioning_folder ? normalize(versioning_folder) : null;
+    // Prepare filters; always exclude the settings file from sync
+    const include = (filter_settings && Array.isArray(filter_settings.include)) ? filter_settings.include : [];
+    const excludeRaw = (filter_settings && Array.isArray(filter_settings.exclude)) ? filter_settings.exclude : [];
+    const exclude = Array.from(new Set([...excludeRaw, DB_FILE_NAME]));
+
+    const size_min = (filter_settings && typeof filter_settings.size_min === "number") ? filter_settings.size_min : 0;
+    const size_max = (filter_settings && typeof filter_settings.size_max === "number") ? filter_settings.size_max : 0;
+
+    const filters = { include, exclude, size_min, size_max };
+    const schedule = schedule_settings ? { ...schedule_settings } : {};
+
+    const newConfig = {
+        taskName,
+        folders,
+        delete_file_method,
+        versioning_folder: normVersioningFolder,
+        sync_mode,
+        filters,
+        schedule,
+        folders_meta: {
+            versioning_folder: normVersioningFolder
+        }
+    };
+
+    let finalConfig = newConfig;
+
+    if (fs.existsSync(dbFilePath)) {
+        try {
+            const existingRaw = await fsp.readFile(dbFilePath, "utf8");
+            const existing = JSON.parse(existingRaw);
+
+            // Update existing config but keep unknown fields
+            finalConfig = {
+                ...existing,
+                ...newConfig,
+                filters: {
+                    ...(existing.filters || {}),
+                    ...newConfig.filters
+                },
+                schedule: {
+                    ...(existing.schedule || {}),
+                    ...newConfig.schedule
+                },
+                folders_meta: {
+                    ...(existing.folders_meta || {}),
+                    ...newConfig.folders_meta
+                }
+            };
+        } catch (err) {
+            // Invalid/corrupted JSON -> log and recreate
+            console.error("Failed to read/parse existing task DB file, recreating it:", err);
+        }
+    }
+
+    await fsp.writeFile(dbFilePath, JSON.stringify(finalConfig, null, 2), "utf8");
+    return dbFilePath;
 }
 
 function removeTaskFromDB(){}
@@ -746,7 +793,8 @@ async function moveFiles(list, dir2) {
 module.exports = {
     compareDirs,
     scan_folder,
-    sync_files
+    sync_files,
+    save_updateTaskInDB
 };
 
 
@@ -762,8 +810,8 @@ module.exports = {
 
 /////////////////////////////// funcs tests ///////////////////////////
 
-const dir_1 = "C:/Users/Seagulltoon/Desktop/1"
-const dir_2 = "C:/Users/Seagulltoon/Desktop/2"
+const dir_1 = "C:/Users/xicey/Desktop/1"
+const dir_2 = "C:/Users/xicey/Desktop/2"
 
 //saveTaskToDB(....)
 // console.log(get_folders_fromDB(///))
