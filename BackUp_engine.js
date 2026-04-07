@@ -631,9 +631,45 @@ function get_folders_fromDB(DBFile){
 }
 
 function get_sync_mode_fromDB(DBFile){
-    // GET FROM DB
-    sync_mode = SYNC_MODES[2] //REF
-    return sync_mode
+    const DB_FILE_NAME = ".purrup-task.json";
+    const defaultDbFile = path.join(process.cwd(), DB_FILE_NAME);
+    let dbFilePath;
+
+    if (!DBFile) {
+        dbFilePath = defaultDbFile;
+    } else if (path.basename(DBFile) === DB_FILE_NAME) {
+        dbFilePath = DBFile;
+    } else {
+        dbFilePath = path.join(DBFile, DB_FILE_NAME);
+    }
+
+    const fallbackMode = SYNC_MODES[2];
+
+    if (!fs.existsSync(dbFilePath)) {
+        console.error(`Task DB file not found: ${dbFilePath}`);
+        return fallbackMode;
+    }
+
+    try {
+        const raw = fs.readFileSync(dbFilePath, "utf8");
+        const config = JSON.parse(raw);
+        const sync_mode = config.sync_mode;
+
+        if (typeof sync_mode !== "string") {
+            console.error("Invalid task DB format: 'sync_mode' must be a string.");
+            return fallbackMode;
+        }
+
+        if (!SYNC_MODES.includes(sync_mode)) {
+            console.error(`Invalid sync mode in task DB: ${sync_mode}. Falling back to default.`);
+            return fallbackMode;
+        }
+
+        return sync_mode;
+    } catch (err) {
+        console.error(`Failed to read sync mode from task DB (${dbFilePath}):`, err);
+        return fallbackMode;
+    }
 }
 
 function get_delete_file_method_fromDB(delete_file_method = ""){
@@ -839,12 +875,9 @@ module.exports = {
     scan_folder,
     sync_files,
     save_updateTaskInDB,
-    removeTaskFromDB
+    removeTaskFromDB,
+    get_sync_mode_fromDB
 };
-
-
-
-
 
 
 
@@ -863,16 +896,27 @@ const dir_2 = "C:/Users/xicey/Desktop/2"
 //........
 // electron . --enable-logging
 
-//console.log(
+//////////////////////////////////////////////////////////////////////
+
+// get_foldersfromDB check
+//   console.log(
 //   get_folders_fromDB("C:/Users/xicey/Desktop/2/.purrup-task.json")
 //  );
 
+// removeTaskFromDB check
 // 1 VARIANT: delete file directly
-//removeTaskFromDB("C:/Users/xicey/Desktop/2/.purrup-task.json")
+//  removeTaskFromDB("C:/Users/xicey/Desktop/2/.purrup-task.json")
 //  .then((result) => console.log("deleted:", result))
 //  .catch((err) => console.error(err));
-
+// --------------------------------
 // 2 VARIANT: delete file from folder
 //  removeTaskFromDB("C:/Users/xicey/Desktop/2/")
 //  .then((result) => console.log("deleted:", result))
 //  .catch((err) => console.error(err));
+
+// get_sync_mode_fromDB check
+// 1 variant
+// console.log(get_sync_mode_fromDB('C:/Users/xicey/Desktop/2/.purrup-task.json'))
+// --------------------------------
+// 2 variant
+// console.log(get_sync_mode_fromDB('C:/Users/xicey/Desktop/2'))
