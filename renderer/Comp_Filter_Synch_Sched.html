@@ -47,18 +47,12 @@
         <div class="ffs-row flex gap-8">
             <div class="ffs-col flex-1">
                 <div class="ffs-section-title font-semibold text-sm mb-1">Include</div>
-                <textarea class="ffs-textarea w-full h-28 rounded-md border border-roseSoft bg-white/70 p-2">*</textarea>
+                <textarea class="ffs-textarea w-full h-28 rounded-md border border-roseSoft bg-white/70 p-2" id="filter-include">*</textarea>
             </div>
 
             <div class="ffs-col flex-1">
                 <div class="ffs-section-title font-semibold text-sm mb-1">Exclude</div>
-                <textarea class="ffs-textarea w-full h-28 rounded-md border border-roseSoft bg-white/70 p-2">
-\\System Volume Information\\
-\\$Recycle.Bin\\
-\\RECYCLE?\\
-\\Recovery\\
-*thumbs.db
-            </textarea>
+                <textarea class="ffs-textarea w-full h-28 rounded-md border border-roseSoft bg-white/70 p-2" id="filter-exclude"></textarea>
             </div>
         </div>
 
@@ -68,51 +62,86 @@
 
                 <div class="ffs-inline flex gap-2 items-center text-sm mb-2">
                     <span>Minimum</span>
-                    <input type="number" value="0" class="w-20 px-2 py-1 rounded-md border border-roseSoft bg-white/70">
+                    <input id="size-min" type="number" value="0" class="w-20 px-2 py-1 rounded-md border border-roseSoft bg-white/70">
                 </div>
 
                 <div class="ffs-inline flex gap-2 items-center text-sm">
                     <span>Maximum</span>
-                    <input type="number" value="0" class="w-20 px-2 py-1 rounded-md border border-roseSoft bg-white/70">
+                    <input id="size-max" type="number" value="0" class="w-20 px-2 py-1 rounded-md border border-roseSoft bg-white/70">
                 </div>
             </div>
 
         </div>
 
-        <div class="ffs-footer flex items-center gap-2 mt-6">
-            <button class="px-3 py-1.5 rounded-md bg-blush">Default</button>
-            <div class="ffs-spacer flex-1"></div>
-            <button class="px-4 py-1.5 rounded-md bg-roseSoft hover:bg-rose text-white">OK</button>
-            <button class="px-4 py-1.5 rounded-md border border-roseSoft">Cancel</button>
-        </div>
 
     </div>
 
     <div class="tab-panel" id="sync">
 
         <div class="ffs-row flex gap-8">
-            <div class="ffs-left space-y-2">
-                <div class="ffs-section-title font-semibold text-sm">Select a variant:</div> <!--todo описание каждого метода-->
+            <!-- LEFT -->
+            <div class="ffs-left space-y-2 w-64">
+                <div class="ffs-section-title font-semibold text-sm">Select a variant:</div>
 
-                <label class="ffs-radio flex gap-2 items-center text-sm"><input type="radio" name="sync" checked class="accent-rose"> Two way</label>
-                <label class="ffs-radio flex gap-2 items-center text-sm"><input type="radio" name="sync" class="accent-rose"> Mirror</label>
-                <label class="ffs-radio flex gap-2 items-center text-sm"><input type="radio" name="sync" class="accent-rose"> Update</label>
+                <label class="ffs-radio flex gap-2 items-center text-sm">
+                    <input type="radio" name="sync" value="two-way" checked class="accent-rose">
+                    Two way
+                </label>
+
+                <label class="ffs-radio flex gap-2 items-center text-sm">
+                    <input type="radio" name="sync" value="mirror" class="accent-rose">
+                    Mirror
+                </label>
+
+                <label class="ffs-radio flex gap-2 items-center text-sm">
+                    <input type="radio" name="sync" value="update" class="accent-rose">
+                    Update
+                </label>
             </div>
 
+            <!-- RIGHT DESCRIPTION -->
+            <div class="w-80 text-sm border rounded-xl p-3" id="sync-description">
+                Two way sync description...
+            </div>
         </div>
 
-        <div class="ffs-divider h-px bg-roseSoft my-4"></div>
+        <hr class="my-6">
 
-        <div class="ffs-row space-y-1 text-sm">
-            <div class="ffs-section-title font-semibold">Delete and overwrite:</div> <!--todo описание каждого метода-->
-            <label class="flex gap-2 items-center"><input type="radio" name="delete" checked class="accent-rose"> Recycle bin</label>
-            <label class="flex gap-2 items-center"><input type="radio" name="delete" class="accent-rose"> Permanent</label>
-            <label class="flex gap-2 items-center"><input type="radio" name="delete" class="accent-rose"> Versioning</label> <!--todo выбор папки!-->
-        </div>
+        <div class="ffs-row flex gap-8">
+            <!-- LEFT -->
+            <div class="space-y-1 text-sm w-64">
+                <div class="ffs-section-title font-semibold">Delete and overwrite:</div>
 
-        <div class="ffs-footer flex justify-end gap-2 mt-6">
-            <button class="px-4 py-1.5 rounded-md bg-roseSoft hover:bg-rose text-white">OK</button>
-            <button class="px-4 py-1.5 rounded-md border border-roseSoft">Cancel</button>
+                <label class="flex gap-2 items-center">
+                    <input type="radio" name="delete" value="recycle" checked class="accent-rose">
+                    Recycle bin
+                </label>
+
+                <label class="flex gap-2 items-center">
+                    <input type="radio" name="delete" value="permanent" class="accent-rose">
+                    Permanent
+                </label>
+
+                <label class="flex gap-2 items-center">
+                    <input type="radio" name="delete" value="versioning" class="accent-rose">
+                    Versioning
+                </label>
+            </div>
+
+            <!-- RIGHT DESCRIPTION -->
+            <div class="w-80 text-sm border rounded-xl p-3">
+                <div id="delete-description">Recycle bin description...</div>
+
+                <div id="versioning-path-container" class="hidden mt-3">
+                    <label class="block text-xs mb-1">Version folder path:</label>
+                    <input
+                            type="text"
+                            id="version-folder-path"
+                            class="w-full border rounded-lg px-2 py-1"
+                            placeholder="C:/Backups/Versions"
+                    >
+                </div>
+            </div>
         </div>
 
     </div>
@@ -123,7 +152,7 @@
 
         <div class="ffs-row flex items-center gap-2 text-sm mt-3">
             <span>Run every</span>
-            <input type="number" value="1" class="w-16 px-2 py-1 rounded-md border border-roseSoft bg-white/70">
+            <input type="number" id="run-every-value" value="1" class="w-16 px-2 py-1 rounded-md border border-roseSoft bg-white/70">
             <select class="px-2 py-1 rounded-md border border-roseSoft bg-white/70">
                 <option>minutes</option>
                 <option>hours</option>
@@ -133,29 +162,34 @@
 
         <div class="ffs-row flex items-center gap-2 text-sm mt-3">
             <span>Start time</span>
-            <input type="time" class="px-2 py-1 rounded-md border border-roseSoft bg-white/70">  <!--todo кнопка NOW для авто выставления текущего времени-->
+            <input type="time" id="start-time" class="px-2 py-1 rounded-md border border-roseSoft bg-white/70">  <!--todo кнопка NOW для авто выставления текущего времени-->
             <span> ... sync will start in ?? minutes</span>
         </div>
 
         <div class="ffs-row flex items-center gap-2 text-sm mt-3">
-            <label class="flex gap-2 items-center"><input type="checkbox" class="accent-rose"> Ignore specific time span (do not bu)</label>
+            <label class="flex gap-2 items-center"><input type="checkbox" class="accent-rose" id="ignore-span-enabled"> Ignore specific time span (do not bu)</label>
 
             <span>From </span>
-            <input type="time" class="px-2 py-1 rounded-md border border-roseSoft bg-white/70">
+            <input type="time" class="px-2 py-1 rounded-md border border-roseSoft bg-white/70" id="ignore-from">
             <span>To </span>
-            <input type="time" class="px-2 py-1 rounded-md border border-roseSoft bg-white/70">
+            <input type="time" class="px-2 py-1 rounded-md border border-roseSoft bg-white/70" id="ignore-to">
         </div>
 
-        <div class="ffs-footer flex justify-end gap-2 mt-6">
-            <button class="px-4 py-1.5 rounded-md bg-roseSoft hover:bg-rose text-white">OK</button>
-            <button class="px-4 py-1.5 rounded-md border border-roseSoft">Cancel</button>
-        </div>
 
+    </div>
+
+    <div class="ffs-footer flex items-center gap-2 mt-6">
+        <button class="px-3 py-1.5 rounded-md bg-blush hover:bg-rose text-white" id="filter-default-btn">Default</button>
+        <div class="ffs-spacer flex-1"></div>
+        <button class="px-4 py-1.5 rounded-md bg-roseSoft hover:bg-rose text-white" id="filter-ok-btn" onclick="window.api.closeWindow('Comp_Filter_Synch_Sched')">OK</button>
+        <button class="px-4 py-1.5 rounded-md border border-roseSoft" id="filter-cancel-btn" onclick="window.api.closeWindow('Comp_Filter_Synch_Sched')">Cancel</button>
     </div>
 
 </div>
 
-<script src="ui.js"></script>
+<script type="module" src="dataCollector.js"></script>
+<script src="FSS_ui.js"></script>
+
 </body>
 </html>
 

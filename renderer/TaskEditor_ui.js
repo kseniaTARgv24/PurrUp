@@ -1,16 +1,4 @@
 var api = window.api;
-document.querySelectorAll(".tab").forEach(tab => {
-    tab.addEventListener("click", () => {
-
-        document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
-        document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
-
-        tab.classList.add("active");
-        document.getElementById(tab.dataset.tab).classList.add("active");
-    });
-});
-
-///////////////////////////////// Task Editor /////////////////////////////////////
 
 const sourceInput = document.querySelector('.path-container .path-block:first-child .path-input');
 const targetInput = document.querySelector('.path-container .path-block:last-child .path-input');
@@ -106,40 +94,7 @@ function createEmptyRow() {
     return row;
 }
 
-function setInputBoxFromDB(){
-    // name, dir 1, dir 2
-    //blank if new
-}
-
-// SaveTask.btn --> Save name, dirs and FSS to DB
-
 function taskEditorImportantFields(){}
-
-
-////////////////////////////////////// FSS /////////////////////////////////////
-
-function setDefaultSettingsToUI(){
-        // initial and when cancelling
-    //Include
-
-    //Exclude
-
-    // min max file size
-
-    //Sync mode + clue note
-
-    //Delete/overwrite + clue note
-
-    //Enable schedule
-
-    //run every num digit
-
-    //start time + clue note
-
-    //Ignore time span check
-
-    //timespan from to
-}
 
 function getAndSetSettingsFromDBToUI(){
     //Include
@@ -169,17 +124,14 @@ function filterImportantFields(){}
 
 function trimAndNormilizeFilterFields(){}
 
-/////////////////////////////////// Widget //////////////////////////////////////
+window.addEventListener("DOMContentLoaded", () => {
+    document.getElementById("save-task-btn").addEventListener("click", () => {
+        const taskData = collectTaskDataFromUI();
+        console.log(taskData);
+        window.api.updateTaskDraft(taskData);
+    });
+});
 
-// RunTask, scheduleEnable btns
-// open task
-// new task
-
-
-
-<!--todo расивый снос строк в списке файлов-->
-
-<!-- todo данные в бд -->
 
 
 

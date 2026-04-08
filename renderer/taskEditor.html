@@ -28,12 +28,12 @@
 
 <!-- HEADER -->
 <div class="task-header flex items-center gap-3 mb-4 bg-white/70 backdrop-blur border border-roseSoft rounded-xl p-3">
-    <input class="task-name flex-1 px-3 py-1.5 rounded-md border border-roseSoft bg-white/70" placeholder="Task name" />
+    <input class="task-name flex-1 px-3 py-1.5 rounded-md border border-roseSoft bg-white/70" placeholder="Task name" id="task-name"/>
 
     <div class="header-actions flex gap-2">
-        <button class="compare-btn px-3 py-1.5 rounded-md bg-blush hover:bg-roseSoft">Compare</button>
-        <button class="save-task-btn px-3 py-1.5 rounded-md bg-rose text-white hover:bg-roseSoft">SAVE TASK</button>
-        <button class="settings-btn px-3 py-1.5 rounded-md border border-roseSoft" onclick="window.api.openWindow('Comp_Filter_Synch_Sched')">
+        <button class="compare-btn px-3 py-1.5 rounded-md bg-blush hover:bg-roseSoft" id="compare-btn">Compare</button>
+        <button class="save-task-btn px-3 py-1.5 rounded-md bg-rose text-white hover:bg-roseSoft" id="save-task-btn">SAVE TASK</button>
+        <button class="settings-btn px-3 py-1.5 rounded-md border border-roseSoft" id="settings-btn" onclick="window.api.openWindow('Comp_Filter_Synch_Sched')">
             Settings
         </button>
     </div>
@@ -42,7 +42,7 @@
 <!-- SOURCE -->
 <div class="path-container flex gap-4 mb-4" style="flex-direction: row">
     <div class="path-block flex-1">
-        <div class="path-label text-sm font-medium mb-1">Source</div>
+        <div class="path-label text-sm font-medium mb-1" id="source-folder">Source</div>
 
         <div class="path-row flex gap-2">
             <input class="path-input flex-1 px-2 py-1.5 rounded-md border border-roseSoft bg-white/70" placeholder="Select source folder" />
@@ -52,7 +52,7 @@
 
     <!-- TARGET -->
     <div class="path-block flex-1">
-        <div class="path-label text-sm font-medium mb-1">Target</div>
+        <div class="path-label text-sm font-medium mb-1" id="target-folder">Target</div>
 
         <div class="path-row flex gap-2">
             <input class="path-input flex-1 px-2 py-1.5 rounded-md border border-roseSoft bg-white/70" placeholder="Select target folder" />
@@ -71,7 +71,7 @@
             <span>Size</span>
         </div>
 
-        <div class="file-list flex-1">
+        <div class="file-list flex-1" id="source-file-list">
             <!-- left files -->
         </div>
     </div>
@@ -88,7 +88,7 @@
             <span>Size</span>
         </div>
 
-        <div class="file-list flex-1">
+        <div class="file-list flex-1" id="target-file-list">
             <!-- right files -->
         </div>
 
@@ -97,10 +97,11 @@
 </div>
 
 <!-- STATUS -->
-<div class="status-bar mt-3 px-3 py-1.5 text-xs bg-blush/30 border border-roseSoft rounded-md">
+<div class="status-bar mt-3 px-3 py-1.5 text-xs bg-blush/30 border border-roseSoft rounded-md" id="status-bar">
     Statistics: 0 files
 </div>
 
-<script src="ui.js"></script>
+<script type="module" src="dataCollector.js"></script>
+<script src="TaskEditor_ui.js"></script>
 </body>
 </html>

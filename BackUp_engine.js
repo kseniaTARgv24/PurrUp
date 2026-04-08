@@ -488,7 +488,7 @@ async function isSyncAllowed(scheduleSettings, last_sync){
 
 }
 
-function saveTaskInTaskList(taskName){
+function saveTaskInTaskList(taskName, configFilePath ){
     const TaskListPath = path.join(process.cwd(), "data", "tasks_list.json");
     const raw = fs.readFileSync(TaskListPath, "utf-8");
     const taskList = JSON.parse(raw).tasks;
@@ -502,101 +502,391 @@ function saveTaskInTaskList(taskName){
     }
 }
 
-//NO NAME UPD
-
-function save_updateTaskInDB(taskName, dir1, dir2, delete_file_method, versioning_folder, sync_mode, filter_settings, schedule_settings){
-    //taksName, folders, delete_file_method, versioning_folder,  sync_mode, filter_settings, schedule_settings
-    // get all from top from UI
-    // check TargetFolder has "task_settings.json" (taskname+setting.json)
-    // if not-> create file, тут же добавить этот файл в "exclude"
-    // if yes -> Update file! +update taskname+setting.json
-    // сделать проверку на читаемость файла (если он коррапнутый или туда кто-то чето занес- ошибка)
-    // .purrup-task.json - Лучше с точкой, чтобы было “скрыто-похоже-на-системное”.
+async function save_updateTaskInDB(taskName, dir1, dir2, delete_file_method, versioning_folder, sync_mode, filter_settings, schedule_settings){
+    // Task settings format:
+    // - taskName: "Namename"
+    // - folders: ["C:/.../1", "C:/.../2"]
+    // - delete_file_method: "Recycle bin" | "Permanent delete" | "Versioning"
+    // - versioning_folder: "C:/.../dir2_version"
+    // - sync_mode: "Two way" | "Mirror" | "Update"
+    // - filters: { include: ["*.txt"], exclude: ["secret*.txt", ".purrup-task.json"], size_min, size_max }
+    // - schedule: { enabled, run_every, delay/start_time, ignore_time_span/time_span ... }
+    //         enabled: false,
+    //         run_every: "1h",      // "30m", "1h", "1d"
+    //         delay: null,          // "07:07 AM" or null
+    //         ignore_time_span: false,
+    //         time_span: []         // ["10:10 PM", "10:20 PM"]
     //
+    // Storage:
+    // - Store task settings as JSON in the target folder (dir2) as `.purrup-task.json`
+    // - If the file exists: validate JSON and update it
+    // - If corrupted/invalid: recreate
+    // - Ensure `.purrup-task.json` is always in filters.exclude
+    // - Trash folder is not stored here (it is resolved locally)
 
-    //todo работа с бд
-    // taksName: "Namename",
-    // folders = ["C:/Users/Seagulltoon/Desktop/1", "C:/Users/Seagulltoon/Desktop/1"],
-    // delete_file_method = "Recycle bin",
-    // versioning_folder = "path"
-    // sync_mode = Two way',
-    // "filters": {
-    //     "include": ["*.txt", "*.md"],   // файлы, которые обязательно включать
-    //         "exclude": ["secret*.txt", "task_settings.json"],     // файлы, которые исключать
-    //         "size_min": 0,                  // минимальный размер файла
-    //         "size_max": 1048576             // максимальный размер файла
-    // },
-    // "schedule": {
-    //     "enabled": true,                // включён ли синк (shortcut in ui)
-    //         "run_every": 100m/100s/100h,        // запуск каждые
-    //         "start_time": "10:10 AM", // время старта
-    //         "ignore_span": {
-    //         "enabled": true,
-    //             "from": "10:10 AM",
-    //             "to": "07:07 PM"
-    //     }
-    //   "folders": {
-    //     "versioning_folder": "C:/Users/Seagulltoon/Desktop/dir2_version",
-    //     "trash_folder": "C:/Users/Seagulltoon/Desktop/Recycle Bin"
-    //   }
+    const DB_FILE_NAME = ".purrup-task.json";
+
+    // Bind settings to the task's target folder
+    const targetFolder = dir2;
+    const dbFilePath = path.join(targetFolder, DB_FILE_NAME);
+
+    // Normalize input paths
+    const folders = [normalize(dir1), normalize(dir2)];
+    const normVersioningFolder = versioning_folder ? normalize(versioning_folder) : null;
+    // Prepare filters; always exclude the settings file from sync
+    const include = (filter_settings && Array.isArray(filter_settings.include)) ? filter_settings.include : [];
+    const excludeRaw = (filter_settings && Array.isArray(filter_settings.exclude)) ? filter_settings.exclude : [];
+    const exclude = Array.from(new Set([...excludeRaw, DB_FILE_NAME]));
+
+    const size_min = (filter_settings && typeof filter_settings.size_min === "number") ? filter_settings.size_min : 0;
+    const size_max = (filter_settings && typeof filter_settings.size_max === "number") ? filter_settings.size_max : 0;
+
+    const filters = { include, exclude, size_min, size_max };
+    const schedule = schedule_settings ? { ...schedule_settings } : {};
+
+    const newConfig = {
+        taskName,
+        folders,
+        delete_file_method,
+        versioning_folder: normVersioningFolder,
+        sync_mode,
+        filters,
+        schedule,
+        folders_meta: {
+            versioning_folder: normVersioningFolder
+        }
+    };
+
+    let finalConfig = newConfig;
+
+    if (fs.existsSync(dbFilePath)) {
+        try {
+            const existingRaw = await fsp.readFile(dbFilePath, "utf8");
+            const existing = JSON.parse(existingRaw);
+
+            // Update existing config but keep unknown fields
+            finalConfig = {
+                ...existing,
+                ...newConfig,
+                filters: {
+                    ...(existing.filters || {}),
+                    ...newConfig.filters
+                },
+                schedule: {
+                    ...(existing.schedule || {}),
+                    ...newConfig.schedule
+                },
+                folders_meta: {
+                    ...(existing.folders_meta || {}),
+                    ...newConfig.folders_meta
+                }
+            };
+        } catch (err) {
+            // Invalid/corrupted JSON -> log and recreate
+            console.error("Failed to read/parse existing task DB file, recreating it:", err);
+        }
+    }
+
+    await fsp.writeFile(dbFilePath, JSON.stringify(finalConfig, null, 2), "utf8");
+    return dbFilePath;
 }
 
-function removeTaskFromDB(){}
+async function removeTaskFromDB(dirOrDbFile){
+    const DB_FILE_NAME = ".purrup-task.json";
+
+    let dbFilePath;
+    if (!dirOrDbFile) {
+        dbFilePath = path.join(process.cwd(), DB_FILE_NAME);
+    } else if (path.basename(dirOrDbFile) === DB_FILE_NAME) {
+        dbFilePath = dirOrDbFile;
+    } else {
+        dbFilePath = path.join(dirOrDbFile, DB_FILE_NAME);
+    }
+
+    if (!fs.existsSync(dbFilePath)) {
+        return false;
+    }
+
+    try {
+        await fsp.unlink(dbFilePath);
+        return true;
+    } catch (err) {
+        console.error(`Failed to remove task DB file (${dbFilePath}):`, err);
+        throw err;
+    }
+}
 
 //////////// Helper funcs ///////////////
 
 // Get info from DB :
 
-function get_folders_fromDB(BDFile){
-    // GET FROM DB
-    // open BDFile and read info from it
+function get_folders_fromDB(DBFile){
+    const defaultDbFile = path.join(process.cwd(), ".purrup-task.json");
+    const dbFilePath = DBFile || defaultDbFile;
 
-    const folders = ["C:/Users/Seagulltoon/Desktop/1", "C:/Users/Seagulltoon/Desktop/1"];
-    return folders;
+    if (!fs.existsSync(dbFilePath)) {
+        console.error(`Task DB file not found: ${dbFilePath}`);
+        return [];
+    }
+
+    try {
+        const raw = fs.readFileSync(dbFilePath, "utf8");
+        const config = JSON.parse(raw);
+
+        if (!Array.isArray(config.folders)) {
+            console.error("Invalid task DB format: 'folders' must be an array.");
+            return [];
+        }
+
+        const folders = config.folders
+            .filter(folder => typeof folder === "string" && folder.trim().length > 0)
+            .map(normalize);
+
+        return folders;
+    } catch (err) {
+        console.error(`Failed to read folders from task DB (${dbFilePath}):`, err);
+        return [];
+    }
 }
 
-function get_sync_mode_fromDB(BDFile){
-    // GET FROM DB
-    sync_mode = SYNC_MODES[2] //REF
-    return sync_mode
+function get_sync_mode_fromDB(DBFile){
+    const DB_FILE_NAME = ".purrup-task.json";
+    const defaultDbFile = path.join(process.cwd(), DB_FILE_NAME);
+    let dbFilePath;
+
+    if (!DBFile) {
+        dbFilePath = defaultDbFile;
+    } else if (path.basename(DBFile) === DB_FILE_NAME) {
+        dbFilePath = DBFile;
+    } else {
+        dbFilePath = path.join(DBFile, DB_FILE_NAME);
+    }
+
+    const fallbackMode = SYNC_MODES[2];
+
+    if (!fs.existsSync(dbFilePath)) {
+        console.error(`Task DB file not found: ${dbFilePath}`);
+        return fallbackMode;
+    }
+
+    try {
+        const raw = fs.readFileSync(dbFilePath, "utf8");
+        const config = JSON.parse(raw);
+        const sync_mode = config.sync_mode;
+
+        if (typeof sync_mode !== "string") {
+            console.error("Invalid task DB format: 'sync_mode' must be a string.");
+            return fallbackMode;
+        }
+
+        if (!SYNC_MODES.includes(sync_mode)) {
+            console.error(`Invalid sync mode in task DB: ${sync_mode}. Falling back to default.`);
+            return fallbackMode;
+        }
+
+        return sync_mode;
+    } catch (err) {
+        console.error(`Failed to read sync mode from task DB (${dbFilePath}):`, err);
+        return fallbackMode;
+    }
 }
 
-function get_delete_file_method_fromDB(delete_file_method = ""){
-    // GET FROM DB
+function get_delete_file_method_fromDB(DBFile){
+    const DB_FILE_NAME = ".purrup-task.json";
+    const defaultDbFile = path.join(process.cwd(), DB_FILE_NAME);
+    let dbFilePath;
 
-    delete_file_method = DELETE_OVERWRITE_METHODS[1] //REF
-    return delete_file_method
+    if (!DBFile) {
+        dbFilePath = defaultDbFile;
+    } else if (path.basename(DBFile) === DB_FILE_NAME) {
+        dbFilePath = DBFile;
+    } else {
+        dbFilePath = path.join(DBFile, DB_FILE_NAME);
+    }
+
+    const fallbackMethod = DELETE_OVERWRITE_METHODS[1];
+
+    if (!fs.existsSync(dbFilePath)) {
+        console.error(`Task DB file not found: ${dbFilePath}`);
+        return fallbackMethod;
+    }
+
+    try {
+        const raw = fs.readFileSync(dbFilePath, "utf8");
+        const config = JSON.parse(raw);
+        const delete_file_method = config.delete_file_method;
+
+        if (typeof delete_file_method !== "string") {
+            console.error("Invalid task DB format: 'delete_file_method' must be a string.");
+            return fallbackMethod;
+        }
+
+        if (!DELETE_OVERWRITE_METHODS.includes(delete_file_method)) {
+            console.error(`Invalid delete file method in task DB: ${delete_file_method}. Falling back to default.`);
+            return fallbackMethod;
+        }
+
+        return delete_file_method;
+    } catch (err) {
+        console.error(`Failed to read delete file method from task DB (${dbFilePath}):`, err);
+        return fallbackMethod;
+    }
 }
 
-function get_filter_settings_fromDB() {
-    // GET FROM DB
+function get_filter_settings_fromDB(DBFile) {
+    const DB_FILE_NAME = ".purrup-task.json";
+    const defaultDbFile = path.join(process.cwd(), DB_FILE_NAME);
+    let dbFilePath;
 
-    const include = ["*.txt", "*.docx"];
-    const exclude = ["*.tmp", "*.log"];
-    const size_min = 0;                        // (байты)
-    const size_max = 10000000;               // (байты)
+    if (!DBFile) {
+        dbFilePath = defaultDbFile;
+    } else if (path.basename(DBFile) === DB_FILE_NAME) {
+        dbFilePath = DBFile;
+    } else {
+        dbFilePath = path.join(DBFile, DB_FILE_NAME);
+    }
 
-    return { include, exclude, size_min, size_max };
+    const fallbackFilters = {
+        include: ["*"],
+        exclude: [],
+        size_min: 0,
+        size_max: 0
+    };
+
+    if (!fs.existsSync(dbFilePath)) {
+        console.error(`Task DB file not found: ${dbFilePath}`);
+        return fallbackFilters;
+    }
+
+    try {
+        const raw = fs.readFileSync(dbFilePath, "utf8");
+        const config = JSON.parse(raw);
+        const filters = config.filters || {};
+
+        const include = Array.isArray(filters.include)
+            ? filters.include.filter(v => typeof v === "string")
+            : fallbackFilters.include;
+        const exclude = Array.isArray(filters.exclude)
+            ? filters.exclude.filter(v => typeof v === "string")
+            : fallbackFilters.exclude;
+        const size_min = (typeof filters.size_min === "number" && Number.isFinite(filters.size_min))
+            ? Math.max(0, filters.size_min)
+            : fallbackFilters.size_min;
+        const size_max = (typeof filters.size_max === "number" && Number.isFinite(filters.size_max))
+            ? Math.max(0, filters.size_max)
+            : fallbackFilters.size_max;
+
+        return { include, exclude, size_min, size_max };
+    } catch (err) {
+        console.error(`Failed to read filter settings from task DB (${dbFilePath}):`, err);
+        return fallbackFilters;
+    }
 }
 
-function get_schedule_settings_fromDB() {
-    // GET FROM DB
+function get_schedule_settings_fromDB(DBFile) {
+    const DB_FILE_NAME = ".purrup-task.json";
+    const defaultDbFile = path.join(process.cwd(), DB_FILE_NAME);
+    let dbFilePath;
 
+    if (!DBFile) {
+        dbFilePath = defaultDbFile;
+    } else if (path.basename(DBFile) === DB_FILE_NAME) {
+        dbFilePath = DBFile;
+    } else {
+        dbFilePath = path.join(DBFile, DB_FILE_NAME);
+    }
 
-    const enabled = true;
-    const run_every = "1h";  // "30m", "1h", "1d"
-    const delay = new Date();         //interpret_delay_until_start("10:10 AM")
-    const ignore_time_span = false;
-    const time_span = ["10:10 PM", "10:20 PM"]
+    const fallbackSchedule = {
+        enabled: false,
+        run_every: "1h",      // "30m", "1h", "1d"
+        delay: null,          // "07:07 AM" or null
+        ignore_time_span: false,
+        time_span: []         // ["10:10 PM", "10:20 PM"]
+    };
 
-    return { enabled, run_every, delay, ignore_time_span, time_span };
+    if (!fs.existsSync(dbFilePath)) {
+        console.error(`Task DB file not found: ${dbFilePath}`);
+        return fallbackSchedule;
+    }
+
+    try {
+        const raw = fs.readFileSync(dbFilePath, "utf8");
+        const config = JSON.parse(raw);
+        const schedule = config.schedule || {};
+
+        const enabled = typeof schedule.enabled === "boolean"
+            ? schedule.enabled
+            : fallbackSchedule.enabled;
+
+        const run_every = (typeof schedule.run_every === "string" && /^[1-9]\d*[mhd]$/.test(schedule.run_every))
+            ? schedule.run_every
+            : fallbackSchedule.run_every;
+
+        const delay = typeof schedule.delay === "string" && schedule.delay.trim().length > 0
+            ? schedule.delay.trim()
+            : fallbackSchedule.delay;
+
+        const ignore_time_span = typeof schedule.ignore_time_span === "boolean"
+            ? schedule.ignore_time_span
+            : fallbackSchedule.ignore_time_span;
+
+        const time_span = (
+            Array.isArray(schedule.time_span) &&
+            schedule.time_span.length === 2 &&
+            schedule.time_span.every(v => typeof v === "string" && v.trim().length > 0)
+        )
+            ? [schedule.time_span[0].trim(), schedule.time_span[1].trim()]
+            : fallbackSchedule.time_span;
+
+        return { enabled, run_every, delay, ignore_time_span, time_span };
+    } catch (err) {
+        console.error(`Failed to read schedule settings from task DB (${dbFilePath}):`, err);
+        return fallbackSchedule;
+    }
 }
 
-function get_versioning_folder_fromDB(){
-    // GET FROM DB
+function get_versioning_folder_fromDB(DBFile) {
+    const DB_FILE_NAME = ".purrup-task.json";
+    const defaultDbFile = path.join(process.cwd(), DB_FILE_NAME);
+    let dbFilePath;
 
-    const versioning_folder = "C:/Users/Seagulltoon/Desktop/dir2_version"
-    return versioning_folder;
+    if (!DBFile) {
+        dbFilePath = defaultDbFile;
+    } else if (path.basename(DBFile) === DB_FILE_NAME) {
+        dbFilePath = DBFile;
+    } else {
+        dbFilePath = path.join(DBFile, DB_FILE_NAME);
+    }
+
+    const fallbackVersioningFolder = normalize(path.join(path.dirname(dbFilePath), ".purrup-versioning"));
+
+    if (!fs.existsSync(dbFilePath)) {
+        console.error(`Task DB file not found: ${dbFilePath}. Using fallback versioning folder.`);
+        return fallbackVersioningFolder;
+    }
+
+    try {
+        const raw = fs.readFileSync(dbFilePath, "utf8");
+        const config = JSON.parse(raw);
+
+        const direct = typeof config.versioning_folder === "string" ? config.versioning_folder.trim() : "";
+        const fromMeta = (
+            config.folders_meta &&
+            typeof config.folders_meta.versioning_folder === "string"
+        ) ? config.folders_meta.versioning_folder.trim() : "";
+
+        const versioningFolder = direct || fromMeta;
+
+        if (!versioningFolder) {
+            console.error("Versioning folder is not set in task DB. Using fallback versioning folder.");
+            return fallbackVersioningFolder;
+        }
+
+        return normalize(versioningFolder);
+    } catch (err) {
+        console.error(`Failed to read versioning folder from task DB (${dbFilePath}):`, err);
+        return fallbackVersioningFolder;
+    }
 }
 
 // Get locally
@@ -762,28 +1052,18 @@ async function moveFiles(list, dir2) {
 module.exports = {
     compareDirs,
     scan_folder,
-    sync_files
+    sync_files,
+    save_updateTaskInDB,
+    removeTaskFromDB,
+    get_sync_mode_fromDB,
+    get_delete_file_method_fromDB,
+    get_filter_settings_fromDB,
+    get_schedule_settings_fromDB,
+    get_versioning_folder_fromDB
 };
-
-
-
-
-
-
-
-
-
-
 
 
 /////////////////////////////// funcs tests ///////////////////////////
 
 const dir_1 = "C:/Users/Seagulltoon/Desktop/1"
 const dir_2 = "C:/Users/Seagulltoon/Desktop/2"
-
-//saveTaskToDB(....)
-// console.log(get_folders_fromDB(///))
-//........
-// electron . --enable-logging
-
-console.log(saveTaskInTaskList("popopipi"))
