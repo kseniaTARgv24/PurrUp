@@ -488,43 +488,48 @@ async function isSyncAllowed(scheduleSettings, last_sync){
 
 }
 
-function saveTaskInTaskList(taskName, configFilePath ){
+function saveTaskInTaskList(taskName, configFilePath) {
     const TaskListPath = path.join(process.cwd(), "data", "tasks_list.json");
-    const raw = fs.readFileSync(TaskListPath, "utf-8");
-    const taskList = JSON.parse(raw).tasks;
-    if (!taskList.includes(taskName)){
-        taskList.push(taskName);
-        fs.writeFileSync(TaskListPath, JSON.stringify(taskList, null, 2)); //Это красивое форматирование файла:
-        return true;
+
+    let taskListData = { tasks: [] };
+    if (fs.existsSync(TaskListPath)) {
+        const raw = fs.readFileSync(TaskListPath, "utf-8");
+        try {
+            taskListData = JSON.parse(raw);
+            if (!Array.isArray(taskListData.tasks)) taskListData.tasks = [];
+        } catch {
+            taskListData = { tasks: [] };
+        }
     }
-    else{
+
+    const exists = taskListData.tasks.some(task => task.name === taskName);
+
+    if (!exists) {
+        taskListData.tasks.push({
+            name: taskName,
+            configPath: configFilePath
+        });
+
+        fs.writeFileSync(TaskListPath, JSON.stringify(taskListData, null, 2));
+        return true;
+    } else {
         return false;
     }
 }
 
 async function save_updateTaskInDB(taskName, dir1, dir2, delete_file_method, versioning_folder, sync_mode, filter_settings, schedule_settings){
-    // Task settings format:
-    // - taskName: "Namename"
-    // - folders: ["C:/.../1", "C:/.../2"]
-    // - delete_file_method: "Recycle bin" | "Permanent delete" | "Versioning"
-    // - versioning_folder: "C:/.../dir2_version"
-    // - sync_mode: "Two way" | "Mirror" | "Update"
-    // - filters: { include: ["*.txt"], exclude: ["secret*.txt", ".purrup-task.json"], size_min, size_max }
-    // - schedule: { enabled, run_every, delay/start_time, ignore_time_span/time_span ... }
-    //         enabled: false,
-    //         run_every: "1h",      // "30m", "1h", "1d"
-    //         delay: null,          // "07:07 AM" or null
-    //         ignore_time_span: false,
-    //         time_span: []         // ["10:10 PM", "10:20 PM"]
-    //
-    // Storage:
-    // - Store task settings as JSON in the target folder (dir2) as `.purrup-task.json`
-    // - If the file exists: validate JSON and update it
-    // - If corrupted/invalid: recreate
-    // - Ensure `.purrup-task.json` is always in filters.exclude
-    // - Trash folder is not stored here (it is resolved locally)
 
-    const DB_FILE_NAME = ".purrup-task.json";
+    function getTaskSettingsFileName(name) {
+        const safeBase = String(name || "")
+            .trim()
+            .replace(/[<>:"/\\|?*\x00-\x1F]/g, "_")
+            .replace(/\s+/g, "_");
+
+        const normalizedBase = safeBase.length > 0 ? safeBase : "task";
+        return `${normalizedBase}-settings.json`;
+    }
+
+    const DB_FILE_NAME = getTaskSettingsFileName(taskName);
 
     // Bind settings to the task's target folder
     const targetFolder = dir2;
@@ -588,20 +593,14 @@ async function save_updateTaskInDB(taskName, dir1, dir2, delete_file_method, ver
     }
 
     await fsp.writeFile(dbFilePath, JSON.stringify(finalConfig, null, 2), "utf8");
+
+    saveTaskInTaskList(taskName, normalize(dbFilePath));
+
     return dbFilePath;
 }
 
 async function removeTaskFromDB(dirOrDbFile){
-    const DB_FILE_NAME = ".purrup-task.json";
-
-    let dbFilePath;
-    if (!dirOrDbFile) {
-        dbFilePath = path.join(process.cwd(), DB_FILE_NAME);
-    } else if (path.basename(dirOrDbFile) === DB_FILE_NAME) {
-        dbFilePath = dirOrDbFile;
-    } else {
-        dbFilePath = path.join(dirOrDbFile, DB_FILE_NAME);
-    }
+    const dbFilePath = resolveTaskDbFilePath(dirOrDbFile);
 
     if (!fs.existsSync(dbFilePath)) {
         return false;
@@ -889,6 +888,11 @@ function get_versioning_folder_fromDB(DBFile) {
     }
 }
 
+function get_DB_file_by_path_and_task_name(taskName, configFilePath){
+    const DBFile = []
+    return DBFile;
+}
+
 // Get locally
 
 function get_trash_folder(){
@@ -1078,3 +1082,5 @@ module.exports = {
 
 const dir_1 = "C:/Users/Seagulltoon/Desktop/1"
 const dir_2 = "C:/Users/Seagulltoon/Desktop/2"
+
+// console.log(saveTaskInTaskList("taskName", dir_2))

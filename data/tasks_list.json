@@ -1,3 +1,8 @@
-[
-  "popopipi"
-]
+{
+  "tasks": [
+    {
+      "name": "nnn",
+      "configPath": "C:\\Users\\Seagulltoon\\Desktop\\2\\nnn-settings.json"
+    }
+  ]
+}
