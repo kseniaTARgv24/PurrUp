@@ -14,4 +14,5 @@ contextBridge.exposeInMainWorld("api", {
     openWindow: (name) => ipcRenderer.send("open-window", name),
     closeWindow: (name) => ipcRenderer.send("close-window", name),
     updateTaskDraft: (data) => ipcRenderer.invoke("update-task-draft", data),
+    saveTask: () => ipcRenderer.invoke("save-task")
 });

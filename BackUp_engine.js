@@ -917,41 +917,52 @@ function interpret_run_every_time(run_every){
     return ms;
 }
 
-function interpret_delay_until_start(start_time){
-    //"07:07 AM"
+function interpret_delay_until_start(start_time) {
+    // "03:19"
 
-    if (!start_time){
+    if (!start_time) {
         return null;
     }
 
-    const now = Date.now();
+    const now = new Date();
 
-    const uiTime = new Date(`1970-01-01 ${start_time}`);
+    const [hours, minutes] = start_time
+        .split(":")
+        .map(Number);
 
     const target = new Date(now);
-    target.setHours(uiTime.getHours());
-    target.setMinutes(uiTime.getMinutes());
+
+    target.setHours(hours);
+    target.setMinutes(minutes);
     target.setSeconds(0);
     target.setMilliseconds(0);
 
+    // если время уже прошло сегодня -> переносим на завтра
     if (target <= now) {
         target.setDate(target.getDate() + 1);
     }
 
-    return target - now;
+    return target.getTime() - now.getTime();
 }
 
-function interpret_ignore_timespan(from, to){
-    // 10:10 AM; 07:07 PM
-    function parseTime(timeString) {
-        const date = new Date(`1970-01-01 ${timeString}`);
-        return date.getHours() * 60 + date.getMinutes(); // минуты от начала суток
+function interpret_ignore_timespan(from, to) {
+    // "03:19", "13:20"
+
+    function parseTimeToMs(timeString) {
+        const [hours, minutes] = timeString
+            .split(":")
+            .map(Number);
+
+        return (
+            hours * 60 * 60 * 1000 +
+            minutes * 60 * 1000
+        );
     }
 
-    const fromMinutes = parseTime(from);
-    const toMinutes = parseTime(to);
-
-    return [fromMinutes, toMinutes];
+    return [
+        parseTimeToMs(from),
+        parseTimeToMs(to)
+    ];
 }
 
 // Other helping funcs :

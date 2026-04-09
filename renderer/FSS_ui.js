@@ -1,4 +1,5 @@
 var api = window.api;
+
 document.querySelectorAll(".tab").forEach(tab => {
     tab.addEventListener("click", () => {
 
@@ -130,3 +131,8 @@ window.addEventListener("DOMContentLoaded", () => {
     }
 });
 
+document.getElementById("filter-ok-btn").addEventListener("click", () => {
+    const taskData = collectTaskDataFromUI("fss");
+    window.api.updateTaskDraft(taskData);
+    window.api.closeWindow("Comp_Filter_Synch_Sched");
+});

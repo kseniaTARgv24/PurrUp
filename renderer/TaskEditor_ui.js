@@ -126,9 +126,9 @@ function trimAndNormilizeFilterFields(){}
 
 window.addEventListener("DOMContentLoaded", () => {
     document.getElementById("save-task-btn").addEventListener("click", () => {
-        const taskData = collectTaskDataFromUI();
-        console.log(taskData);
+        const taskData = collectTaskDataFromUI("taskEditor");
         window.api.updateTaskDraft(taskData);
+        window.api.saveTask();
     });
 });
 

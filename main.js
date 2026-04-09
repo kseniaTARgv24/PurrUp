@@ -136,10 +136,36 @@ ipcMain.handle("update-task-draft", (event, partialData) => {
         ... currentTaskDraft,
         ... partialData
     };
+    console.log(JSON.stringify(currentTaskDraft, null, 2));
     return currentTaskDraft;
 })
 
-ipcMain.handle("save-current-task", () => {
-    return backupEngine.save_updateTaskInDB(currentTaskDraft);
-    //+add to list
+ipcMain.handle("save-task", async () => {
+    await backupEngine.save_updateTaskInDB(
+        currentTaskDraft.taskName,
+        currentTaskDraft.dir1,
+        currentTaskDraft.dir2,
+        currentTaskDraft.delete_file_method,
+        currentTaskDraft.versioning_folder,
+        currentTaskDraft.sync_mode,
+        currentTaskDraft.filter_settings,
+        currentTaskDraft.schedule_settings
+    );
+
+    clearDraft();
+
+    return true;
 });
+
+function clearDraft() {
+    currentTaskDraft = {
+        taskName: "",
+        dir1: "",
+        dir2: "",
+        delete_file_method: "recycle",
+        versioning_folder: "",
+        sync_mode: "two-way",
+        filter_settings: {},
+        schedule_settings: {}
+    };
+}
