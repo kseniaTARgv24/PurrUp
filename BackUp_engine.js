@@ -617,6 +617,37 @@ async function removeTaskFromDB(dirOrDbFile){
 
 //////////// Helper funcs ///////////////
 
+function isTaskSettingsFileName(fileName) {
+    return typeof fileName === "string" && fileName.toLowerCase().endsWith("-settings.json");
+}
+
+function resolveTaskDbFilePath(dirOrDbFile) {
+    // If an explicit JSON path is passed, use it directly.
+    if (typeof dirOrDbFile === "string" && path.extname(dirOrDbFile).toLowerCase() === ".json") {
+        return dirOrDbFile;
+    }
+
+    const baseDir = dirOrDbFile || process.cwd();
+
+    try {
+        if (fs.existsSync(baseDir)) {
+            const settingsFiles = fs.readdirSync(baseDir, { withFileTypes: true })
+                .filter(entry => entry.isFile() && isTaskSettingsFileName(entry.name))
+                .map(entry => entry.name)
+                .sort((a, b) => a.localeCompare(b));
+
+            if (settingsFiles.length > 0) {
+                return path.join(baseDir, settingsFiles[0]);
+            }
+        }
+    } catch (err) {
+        console.error(`Failed to resolve task DB file in ${baseDir}:`, err);
+    }
+
+    // Default file name when no task settings file exists yet.
+    return path.join(baseDir, "task-settings.json");
+}
+
 // Get info from DB :
 
 function get_folders_fromDB(DBFile){
@@ -1029,7 +1060,66 @@ module.exports = {
 
 /////////////////////////////// funcs tests ///////////////////////////
 
-const dir_1 = "C:/Users/Seagulltoon/Desktop/1"
-const dir_2 = "C:/Users/Seagulltoon/Desktop/2"
+const dir_1 = "C:/Users/xicey/Desktop/1"
+const dir_2 = "C:/Users/xicey/Desktop/2"
 
-// console.log(saveTaskInTaskList("taskName", dir_2))
+//saveTaskToDB(....)
+// console.log(get_folders_fromDB(///))
+//........
+// electron . --enable-logging
+
+//////////////////////////////////////////////////////////////////////
+
+// create db file example
+// node -e "const e=require('./BackUp_engine.js'); (async()=>{ const p=await e.save_updateTaskInDB('backup docs','C:/Users/xicey/Desktop/1','C:/Users/xicey/Desktop/2','Versioning','C:/Users/xicey/Desktop/2_versioning','Two way',{include:['*'],exclude:[],size_min:0,size_max:0},{enabled:false,run_every:'1h',delay:null,ignore_time_span:false,time_span:[]}); console.log('DB file:', p); })().catch(console.error)"
+
+// get_foldersfromDB check
+//   console.log(
+//   get_folders_fromDB("C:/Users/xicey/Desktop/2/backup_docs-settings.json")
+//  );
+
+// removeTaskFromDB check
+// 1 VARIANT: delete file directly
+//  removeTaskFromDB("C:/Users/xicey/Desktop/2/backup_docs-settings.json")
+//  .then((result) => console.log("deleted:", result))
+//  .catch((err) => console.error(err));
+// --------------------------------
+// 2 VARIANT: delete file by folder (auto-detects *-settings.json)
+//  removeTaskFromDB("C:/Users/xicey/Desktop/2/")
+//  .then((result) => console.log("deleted:", result))
+//  .catch((err) => console.error(err));
+
+// get_sync_mode_fromDB check
+// 1 variant
+// console.log(get_sync_mode_fromDB('C:/Users/xicey/Desktop/2/backup_docs-settings.json'))
+// --------------------------------
+// 2 variant
+// console.log(get_sync_mode_fromDB('C:/Users/xicey/Desktop/2'))
+
+// get_delete_file_method_fromDB check
+// 1 variant
+// console.log(get_delete_file_method_fromDB('C:/Users/xicey/Desktop/2/backup_docs-settings.json'))
+// --------------------------------
+// 2 variant
+// console.log(get_delete_file_method_fromDB('C:/Users/xicey/Desktop/2'))
+
+// get_filter_settings_fromDB check
+// 1 variant
+// console.log(get_filter_settings_fromDB('C:/Users/xicey/Desktop/2/backup_docs-settings.json'))
+// --------------------------------
+// 2 variant
+// console.log(get_filter_settings_fromDB('C:/Users/xicey/Desktop/2'))
+
+// get_schedule_settings_fromDB check
+// 1 variant
+// console.log(get_schedule_settings_fromDB('C:/Users/xicey/Desktop/2/backup_docs-settings.json'))
+// --------------------------------
+// 2 variant
+// console.log(get_schedule_settings_fromDB('C:/Users/xicey/Desktop/2'))
+
+// get_versioning_folder_fromDB check
+// 1 variant
+// console.log(get_versioning_folder_fromDB('C:/Users/xicey/Desktop/2/backup_docs-settings.json'))
+// --------------------------------
+// 2 variant
+// console.log(get_versioning_folder_fromDB('C:/Users/xicey/Desktop/2'))
