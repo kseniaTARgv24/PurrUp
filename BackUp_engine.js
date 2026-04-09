@@ -9,7 +9,7 @@ const path = require("path");
 const fs = require("fs");
 const fsp = require("fs/promises");
 const { join, resolve, basename } = path;
-
+const { v4: uuidv4 } = require("uuid");
 
 ////////////////// Main funcs ///////////////
 
@@ -488,7 +488,7 @@ async function isSyncAllowed(scheduleSettings, last_sync){
 
 }
 
-function saveTaskInTaskList(taskName, configFilePath) {
+function saveTaskInTaskList(taskId, taskName, configFilePath) {
     const TaskListPath = path.join(process.cwd(), "data", "tasks_list.json");
 
     let taskListData = { tasks: [] };
@@ -502,12 +502,13 @@ function saveTaskInTaskList(taskName, configFilePath) {
         }
     }
 
-    const exists = taskListData.tasks.some(task => task.name === taskName);
+    const exists = taskListData.tasks.some(task => task.id === taskId);
 
     if (!exists) {
         taskListData.tasks.push({
+            id: taskId,
             name: taskName,
-            configPath: configFilePath
+            configFilePath
         });
 
         fs.writeFileSync(TaskListPath, JSON.stringify(taskListData, null, 2));
@@ -517,19 +518,11 @@ function saveTaskInTaskList(taskName, configFilePath) {
     }
 }
 
-async function save_updateTaskInDB(taskName, dir1, dir2, delete_file_method, versioning_folder, sync_mode, filter_settings, schedule_settings){
+async function save_updateTaskInDB(taskId, taskName, dir1, dir2, delete_file_method, versioning_folder, sync_mode, filter_settings, schedule_settings){
 
-    function getTaskSettingsFileName(name) {
-        const safeBase = String(name || "")
-            .trim()
-            .replace(/[<>:"/\\|?*\x00-\x1F]/g, "_")
-            .replace(/\s+/g, "_");
+    if (!taskId) taskId = uuidv4();
 
-        const normalizedBase = safeBase.length > 0 ? safeBase : "task";
-        return `${normalizedBase}-settings.json`;
-    }
-
-    const DB_FILE_NAME = getTaskSettingsFileName(taskName);
+    const DB_FILE_NAME = `${taskId}-settings.json`;
 
     // Bind settings to the task's target folder
     const targetFolder = dir2;
@@ -550,6 +543,7 @@ async function save_updateTaskInDB(taskName, dir1, dir2, delete_file_method, ver
     const schedule = schedule_settings ? { ...schedule_settings } : {};
 
     const newConfig = {
+        id: taskId,
         taskName,
         folders,
         delete_file_method,
@@ -594,7 +588,7 @@ async function save_updateTaskInDB(taskName, dir1, dir2, delete_file_method, ver
 
     await fsp.writeFile(dbFilePath, JSON.stringify(finalConfig, null, 2), "utf8");
 
-    saveTaskInTaskList(taskName, normalize(dbFilePath));
+    saveTaskInTaskList(taskId, taskName, normalize(dbFilePath));
 
     return dbFilePath;
 }
@@ -837,7 +831,7 @@ function get_versioning_folder_fromDB(DBFile) {
     }
 }
 
-function get_DB_file_by_path_and_task_name(taskName, configFilePath){
+function get_task_name_by_id(taskId){
     const DBFile = []
     return DBFile;
 }
@@ -919,6 +913,33 @@ function interpret_ignore_timespan(from, to) {
 }
 
 // Other helping funcs :
+
+function resolveTaskDbFilePath(dirOrDbFile) {
+    // If an explicit JSON path is passed, use it directly.
+    if (typeof dirOrDbFile === "string" && path.extname(dirOrDbFile).toLowerCase() === ".json") {
+        return dirOrDbFile;
+    }
+
+    const baseDir = dirOrDbFile || process.cwd();
+
+    try {
+        if (fs.existsSync(baseDir)) {
+            const settingsFiles = fs.readdirSync(baseDir, { withFileTypes: true })
+                .filter(entry => entry.isFile() && isTaskSettingsFileName(entry.name))
+                .map(entry => entry.name)
+                .sort((a, b) => a.localeCompare(b));
+
+            if (settingsFiles.length > 0) {
+                return path.join(baseDir, settingsFiles[0]);
+            }
+        }
+    } catch (err) {
+        console.error(`Failed to resolve task DB file in ${baseDir}:`, err);
+    }
+
+    // Default file name when no task settings file exists yet.
+    return path.join(baseDir, "task-settings.json");
+}
 
 async function getUniquePath(dir, fileName) {
     const ext = path.extname(fileName);     // .txt

@@ -5,6 +5,7 @@ const backupEngine = require("./BackUp_engine.js");
 
 let windows = {};
 let currentTaskDraft ={
+    taskId: null,
     taskName: "",
     source: "",
     target: "",
@@ -71,6 +72,19 @@ function createAllWindows() {
 
 }
 
+function clearDraft() {
+    currentTaskDraft = {
+        taskName: "",
+        dir1: "",
+        dir2: "",
+        delete_file_method: "recycle",
+        versioning_folder: "",
+        sync_mode: "two-way",
+        filter_settings: {},
+        schedule_settings: {}
+    };
+}
+
 app.whenReady().then(createAllWindows);
 
 app.on("window-all-closed", () => {
@@ -99,36 +113,8 @@ ipcMain.handle("compare-dirs", (event, dir1, dir2) => {
     return backupEngine.compareDirs(dir1, dir2); // возвращаем результат в renderer
 });
 
-ipcMain.handle("scan-folder", (event, dir, file_list={}, root) => {
-    return backupEngine.scan_folder(dir, file_list, root);
-})
-
-ipcMain.handle("save-update-task-db", (event, task) => {
-    return backupEngine.save_updateTaskInDB(task);
-});
-
 ipcMain.handle("remove-task-db", (event, taskName) => {
     return backupEngine.removeTaskFromDB(taskName);
-});
-
-ipcMain.handle("get-sync-mode-db", (event, taskName) => {
-    return backupEngine.get_sync_mode_fromDB(taskName);
-});
-
-ipcMain.handle("get-delete-method-db", (event, taskName) => {
-    return backupEngine.get_delete_file_method_fromDB(taskName);
-});
-
-ipcMain.handle("get-filter-settings-db", (event, taskName) => {
-    return backupEngine.get_filter_settings_fromDB(taskName);
-});
-
-ipcMain.handle("get-schedule-settings-db", (event, taskName) => {
-    return backupEngine.get_schedule_settings_fromDB(taskName);
-});
-
-ipcMain.handle("get-versioning-folder-db", (event, taskName) => {
-    return backupEngine.get_versioning_folder_fromDB(taskName);
 });
 
 ipcMain.handle("update-task-draft", (event, partialData) => {
@@ -157,15 +143,17 @@ ipcMain.handle("save-task", async () => {
     return true;
 });
 
-function clearDraft() {
-    currentTaskDraft = {
-        taskName: "",
-        dir1: "",
-        dir2: "",
-        delete_file_method: "recycle",
-        versioning_folder: "",
-        sync_mode: "two-way",
-        filter_settings: {},
-        schedule_settings: {}
-    };
-}
+ipcMain.handle("open-task-settings", (event, windowName, taskId) => {
+    currentTaskDraft.taskId = taskId;
+    //
+    // допиши сюда присваивание драфту значений по функциям, которые я дам ниже
+
+    if (windows[windowName]) {
+        windows[windowName].show();
+        windows[windowName].focus();
+    }else
+    {
+        createWindow(windowName, `${windowName}.html`);
+        windows[windowName].show();
+        windows[windowName].focus();}
+})
