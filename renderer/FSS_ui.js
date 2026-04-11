@@ -47,92 +47,157 @@ document.querySelectorAll('input[name="delete"]').forEach(radio => {
     });
 });
 
-function setDefaultSettingsInUI() {
-    console.log("set defaults");
+window.addEventListener("DOMContentLoaded", async () => {
 
-    // FILTER
-    const include = document.getElementById("filter-include");
-    if (include) include.value = "*";
+    const currentDraft = await window.api.getCurrentTaskDraft()
 
-    const exclude = document.getElementById("filter-exclude");
-    if (exclude) {
-        exclude.value =
-            `\\System Volume Information\\
-            \\$Recycle.Bin\\
-            \\RECYCLE?\\
-            \\Recovery\\
-            *thumbs.db`;
+    const cancelBtn = document.getElementById("filter-cancel-btn");
+    const defaultBtn = document.getElementById("filter-default-btn");
+    const okBtn = document.getElementById("filter-ok-btn");
+
+    if (cancelBtn) {
+        cancelBtn.addEventListener("click", async () => {
+            const currentDraft = await window.api.getCurrentTaskDraft();
+            fillFSSUI(currentDraft);
+            window.api.hideWindow("Comp_Filter_Synch_Sched");
+        });
+    }
+
+    if (defaultBtn) {
+        defaultBtn.addEventListener("click", async () => {
+            const freshDraft = await window.api.getDefaultTaskDraft();
+            fillFSSUI(freshDraft);
+        });
+    }
+
+    if (okBtn) {
+        okBtn.addEventListener("click", async () => {
+
+            const updatedDraft = collectTaskDataFromUI("fss");
+
+            await window.api.updateTaskDraft(updatedDraft);
+
+            window.api.hideWindow("Comp_Filter_Synch_Sched");
+        });
+    }
+});
+
+window.api.onRefreshDraftUI(async () => {
+    const draft = await window.api.getCurrentTaskDraft();
+    fillFSSUI(draft);
+});
+
+function fillFSSUI(currentTaskDraft) {
+
+    // =========================
+    // DELETE METHOD
+    // =========================
+    const deleteRadio = document.querySelector(
+        `input[name="delete"][value="${currentTaskDraft.delete_file_method || "recycle"}"]`
+    );
+
+    if (deleteRadio) {
+        deleteRadio.checked = true;
+    }
+
+    // =========================
+    // SYNC MODE
+    // =========================
+    const syncRadio = document.querySelector(
+        `input[name="sync"][value="${currentTaskDraft.sync_mode || "two-way"}"]`
+    );
+
+    if (syncRadio) {
+        syncRadio.checked = true;
+    }
+
+    // =========================
+    // VERSIONING FOLDER
+    // =========================
+    const versionInput = document.getElementById("version-folder-path");
+    if (versionInput) {
+        versionInput.value = currentTaskDraft.versioning_folder || "";
+    }
+
+    // =========================
+    // FILTERS
+    // =========================
+    const filters = currentTaskDraft.filter_settings || {};
+
+    const includeInput = document.getElementById("filter-include");
+    if (includeInput) {
+        includeInput.value = toLines(filters.include);
+    }
+
+    const excludeInput = document.getElementById("filter-exclude");
+    if (excludeInput) {
+        excludeInput.value = toLines(filters.exclude);
     }
 
     const sizeMin = document.getElementById("size-min");
-    if (sizeMin) sizeMin.value = 0;
+    if (sizeMin) {
+        sizeMin.value = filters.size_min || 0;
+    }
 
     const sizeMax = document.getElementById("size-max");
-    if (sizeMax) sizeMax.value = 0;
-
-    // SYNC MODE
-    const syncMode = document.querySelector('input[name="sync"][value="two-way"]');
-    if (syncMode) syncMode.checked = true;
-
-    const syncDescription = document.getElementById("sync-description");
-    if (syncDescription) {
-        syncDescription.textContent = "Two way sync description placeholder.";
+    if (sizeMax) {
+        sizeMax.value = filters.size_max || 0;
     }
 
-    // DELETE MODE
-    const deleteMode = document.querySelector('input[name="delete"][value="recycle"]');
-    if (deleteMode) deleteMode.checked = true;
-
-    const deleteDescription = document.getElementById("delete-description");
-    if (deleteDescription) {
-        deleteDescription.textContent = "Recycle bin description placeholder.";
-    }
-
-    const versionPath = document.getElementById("version-folder-path");
-    if (versionPath) versionPath.value = "";
-
-    const versionContainer = document.getElementById("versioning-path-container");
-    if (versionContainer) versionContainer.classList.add("hidden");
-
+    // =========================
     // SCHEDULE
-    const scheduleEnabled = document.getElementById("schedule-enabled");
-    if (scheduleEnabled) scheduleEnabled.checked = false;
+    // =========================
+    const schedule = currentTaskDraft.schedule_settings || {};
 
-    const runEveryValue = document.getElementById("run-every-value");
-    if (runEveryValue) runEveryValue.value = 1;
+    const enabled = document.getElementById("schedule-enabled");
+    if (enabled) {
+        enabled.checked = schedule.enabled || false;
+    }
 
-    const runEveryUnit = document.getElementById("run-every-unit");
-    if (runEveryUnit) runEveryUnit.value = "hours";
+    const runValue = document.getElementById("run-every-value");
+    const runUnit = document.getElementById("run-every-unit");
+
+    if (schedule.run_every) {
+        const numberPart = parseInt(schedule.run_every);
+        const unitPart = schedule.run_every.slice(-1);
+
+        if (runValue) {
+            runValue.value = numberPart;
+        }
+
+        if (runUnit) {
+            runUnit.value =
+                unitPart === "m" ? "minutes" :
+                    unitPart === "h" ? "hours" :
+                        unitPart === "d" ? "days" :
+                            "hours";
+        }
+    }
 
     const startTime = document.getElementById("start-time");
-    if (startTime) startTime.value = "";
+    if (startTime) {
+        startTime.value = schedule.delay || "";
+    }
 
-    const ignoreSpanEnabled = document.getElementById("ignore-span-enabled");
-    if (ignoreSpanEnabled) ignoreSpanEnabled.checked = false;
+    const ignoreEnabled = document.getElementById("ignore-span-enabled");
+    if (ignoreEnabled) {
+        ignoreEnabled.checked = schedule.ignore_time_span || false;
+    }
 
-    const ignoreFrom = document.getElementById("ignore-from");
-    if (ignoreFrom) ignoreFrom.value = "";
+    const fromInput = document.getElementById("ignore-from");
+    const toInput = document.getElementById("ignore-to");
 
-    const ignoreTo = document.getElementById("ignore-to");
-    if (ignoreTo) ignoreTo.value = "";
+    if (fromInput) {
+        fromInput.value = schedule.time_span?.[0] || "";
+    }
+
+    if (toInput) {
+        toInput.value = schedule.time_span?.[1] || "";
+    }
 }
 
-window.addEventListener("DOMContentLoaded", () => {
-    setDefaultSettingsInUI();
-
-    const cancelBtn = document.getElementById("filter-cancel-btn");
-    if (cancelBtn) {
-        cancelBtn.addEventListener("click", setDefaultSettingsInUI);
-    }
-
-    const defaultBtn = document.getElementById("filter-default-btn");
-    if (defaultBtn) {
-        defaultBtn.addEventListener("click", setDefaultSettingsInUI);
-    }
-});
-
-document.getElementById("filter-ok-btn").addEventListener("click", () => {
-    const taskData = collectTaskDataFromUI("fss");
-    window.api.updateTaskDraft(taskData);
-    window.api.closeWindow("Comp_Filter_Synch_Sched");
-});
+function toLines(value) {
+    if (Array.isArray(value)) return value.join("\n");
+    if (!value) return "";
+    return String(value);
+}

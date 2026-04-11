@@ -94,44 +94,38 @@ function createEmptyRow() {
     return row;
 }
 
-function taskEditorImportantFields(){}
+window.addEventListener("DOMContentLoaded", async () => {
 
-function getAndSetSettingsFromDBToUI(){
-    //Include
-
-    //Exclude
-
-    // min max file size
-
-    //Sync mode + clue note
-
-    //Delete/overwrite + clue note
-
-    //Enable schedule
-
-    //run every num digit
-
-    //start time + clue note
-
-    //Ignore time span check
-
-    //timespan from to
-}
-
-function scheduleImportantFields(){}
-
-function filterImportantFields(){}
-
-function trimAndNormilizeFilterFields(){}
-
-window.addEventListener("DOMContentLoaded", () => {
-    document.getElementById("save-task-btn").addEventListener("click", () => {
+    document.getElementById("save-task-btn").addEventListener("click", async () => {
         const taskData = collectTaskDataFromUI("taskEditor");
-        window.api.updateTaskDraft(taskData);
-        window.api.saveTask();
+
+        await window.api.updateTaskDraft(taskData);
+        await window.api.saveTask();
+        window.api.hideWindow("taskEditor");
     });
 });
 
+window.api.onRefreshDraftUI(async () => {
+    const draft = await window.api.getCurrentTaskDraft();
+    fillTaskEditorUI(draft);
+});
+
+function fillTaskEditorUI(currentTaskDraft) {
+    const taskNameInput = document.querySelector(".task-name");
+    if (taskNameInput) {
+        taskNameInput.value = currentTaskDraft.taskName || "";
+    }
+
+    const pathInputs = document.querySelectorAll(".path-block .path-input");
+
+    if (pathInputs[0]) {
+        pathInputs[0].value = currentTaskDraft.dir1 || "";
+    }
+
+    if (pathInputs[1]) {
+        pathInputs[1].value = currentTaskDraft.dir2 || "";
+    }
+}
 
 
 

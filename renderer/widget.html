@@ -85,20 +85,8 @@ flex items-center justify-center"
 
 
         <!-- EDITOR -->
-        <button
-                class="editor-btn
-w-[64px]
-h-[64px]
-rounded-full
-border
-border-roseSoft
-bg-white/70
-transition
-duration-200
-hover:scale-110
-flex items-center justify-center"
-                onclick="window.api.openWindow('taskEditor')"
-        >
+        <button id="new-task-btn"
+                class="editor-btn w-[64px] h-[64px] rounded-full border border-roseSoft bg-white/70 transition duration-200 hover:scale-110 flex items-center justify-center"  >
         </button>
 
     </div>
@@ -106,116 +94,16 @@ flex items-center justify-center"
 
     <!-- TASK LIST -->
     <div class="task-container relative">
-
-<!--        &lt;!&ndash; fade top &ndash;&gt;-->
-<!--        <div class="pointer-events-none absolute top-0 left-0 right-2 h-6 bg-gradient-to-b from-cream to-transparent z-10"></div>-->
-
         <!-- fade bottom -->
         <div class="pointer-events-none absolute bottom-0 left-0 right-2 h-6 bg-gradient-to-t from-cream to-transparent z-10"></div>
 
-
-        <div class="task-scroll
-h-[260px]
-overflow-y-auto
-flex flex-col gap-3 pr-2">
-
+        <div id="task-list-widget" class="task-scroll h-[260px] overflow-y-auto flex flex-col gap-3 pr-2">
 
             <!-- TASK ITEM -->
-            <div class="task-item
-flex items-center
-justify-between
-gap-3
-px-4
-py-3
-rounded-xl
-border
-border-roseSoft
-bg-white/70
-backdrop-blur">
-
-                <!-- TASK NAME -->
-                <div class="task-name flex-1 text-sm">
-                    Task name new task
-                </div>
-
-                <!-- START BUTTON -->
-                <button
-                        class="task-start
-w-[36px]
-h-[36px]
-rounded-full
-border
-border-roseSoft
-bg-white/70
-transition
-duration-200
-hover:scale-110">
-                </button>
-
-                <!-- TOGGLE -->
-                <button
-                        class="task-toggle
-w-[64px]
-h-[32px]
-rounded-full
-border
-border-roseSoft
-bg-white/70
-transition
-duration-200">
-                </button>
-
-            </div>
-
-
-            <!-- ПРОБНЫЕ ЭЛЕМЕНТЫ -->    <!-- TODO: При нажатии на целый контейнер с 1ой задачей- открывается ЕЁ taskEditor с выставленными параметрами-->
-
-            <div data-task-id="123" class="task-item flex items-center justify-between gap-3 px-4 py-3 rounded-xl border border-roseSoft bg-white/70">
-                <div class="task-name flex-1 text-sm">Task name new task</div>
-                <button class="task-start w-[36px] h-[36px] rounded-full border border-roseSoft"></button>
-                <button class="task-toggle w-[64px] h-[32px] rounded-full border border-roseSoft"></button> <!--todo NB!! task_active_toggle in widget = schedule enabled in task editor!!! (shortcut)-->
-            </div>
-
-            <div class="task-item flex items-center justify-between gap-3 px-4 py-3 rounded-xl border border-roseSoft bg-white/70">
-                <div class="task-name flex-1 text-sm">Task name new task</div>
-                <button class="task-start w-[36px] h-[36px] rounded-full border border-roseSoft"></button>
-                <button class="task-toggle w-[64px] h-[32px] rounded-full border border-roseSoft"></button>
-            </div>
-
-            <div class="task-item flex items-center justify-between gap-3 px-4 py-3 rounded-xl border border-roseSoft bg-white/70">
-                <div class="task-name flex-1 text-sm">Task name new task</div>
-                <button class="task-start w-[36px] h-[36px] rounded-full border border-roseSoft"></button>
-                <button class="task-toggle w-[64px] h-[32px] rounded-full border border-roseSoft"></button>
-            </div>
-
-            <div class="task-item flex items-center justify-between gap-3 px-4 py-3 rounded-xl border border-roseSoft bg-white/70">
-                <div class="task-name flex-1 text-sm">Task name new task</div>
-                <button class="task-start w-[36px] h-[36px] rounded-full border border-roseSoft"></button>
-                <button class="task-toggle w-[64px] h-[32px] rounded-full border border-roseSoft"></button>
-            </div>
-
-            <div class="task-item flex items-center justify-between gap-3 px-4 py-3 rounded-xl border border-roseSoft bg-white/70">
-                <div class="task-name flex-1 text-sm">Task name new task</div>
-                <button class="task-start w-[36px] h-[36px] rounded-full border border-roseSoft"></button>
-                <button class="task-toggle w-[64px] h-[32px] rounded-full border border-roseSoft"></button>
-            </div>
-
-            <div class="task-item flex items-center justify-between gap-3 px-4 py-3 rounded-xl border border-roseSoft bg-white/70">
-                <div class="task-name flex-1 text-sm">Task name new task</div>
-                <button class="task-start w-[36px] h-[36px] rounded-full border border-roseSoft"></button>
-                <button class="task-toggle w-[64px] h-[32px] rounded-full border border-roseSoft"></button>
-            </div>
-
-            <div class="task-item flex items-center justify-between gap-3 px-4 py-3 rounded-xl border border-roseSoft bg-white/70">
-                <div class="task-name flex-1 text-sm">Task name new task</div>
-                <button class="task-start w-[36px] h-[36px] rounded-full border border-roseSoft"></button>
-                <button class="task-toggle w-[64px] h-[32px] rounded-full border border-roseSoft"></button>
-            </div>
 
         </div>
     </div>
 
-</div>
-
+    <script src="Widget_ui.js"></script>
 </body>
 </html>

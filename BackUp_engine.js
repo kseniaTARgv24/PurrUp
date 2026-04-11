@@ -95,7 +95,7 @@ function compareDirs(dir1, dir2) {
 const SYNC_MODES = ['Two way', 'Mirror', 'Update']
 const DELETE_OVERWRITE_METHODS = ["Recycle bin", "Permanent delete", "Versioning"]
 
-async function sync_files(dir1, dir2){
+async function sync_files(dir1, dir2, DBFile){
 
     // folders data and info:
     const folder_1_list = scan_folder(dir1); //{file_relative_path: size, date}
@@ -103,9 +103,12 @@ async function sync_files(dir1, dir2){
     let compare_result_list = compareDirs(dir1, dir2)  //|is in dir1 -- is in dir2 -- (if both TRUE) status (same or not)|  { file: 'b.txt', status: "in both dir's: same" }
 
     // user's sync settings
-    const sync_mode = get_sync_mode_fromDB();
-    const delete_file_method = get_delete_file_method_fromDB()
-    const filterSettings = get_filter_settings_fromDB(); // { include, exclude, size_min, size_max } --> {include: [ '*.txt', '*.docx' ], exclude: [ '*.tmp', '*.log' ], size_min: 0, size_max: 10000000 }
+    const sync_mode = await get_sync_mode_fromDB(DBFile);
+    const delete_file_method = await get_delete_file_method_fromDB(DBFile)
+    const filterSettings = await get_filter_settings_fromDB(DBFile); // { include, exclude, size_min, size_max } --> {include: [ '*.txt', '*.docx' ], exclude: [ '*.tmp', '*.log' ], size_min: 0, size_max: 10000000 }
+    console.log("include "+ filterSettings.include);
+    console.log("filter "+ filterSettings);
+    console.log("syncmode "+ sync_mode);
 
     console.log("before: ", compareDirs(dir1, dir2));
 
@@ -114,12 +117,14 @@ async function sync_files(dir1, dir2){
 
     //// FILTERING ////
     let included_files = []
+
     for (let file of compare_result_list){
+
         //INCLUDE
-        if (filterSettings.include.length > 0 || !filterSettings.include.includes("*")){
+        if (filterSettings.include.length > 0 && !filterSettings.include.includes("*")){
             // look for file 's that end with text after "*" (like in "*.txt")
-            const isIncluded = filterSettings.include.some(pattern =>    // параметры => то с ними сделать?
-                file.file.endsWith(pattern.replace("*", ""))      // тут: паттерн => есть ли файлы с окончанием как (если обрезать вот так паттерн)?
+            const isIncluded = filterSettings.include.some(pattern =>
+                matchPattern(file.file, pattern)
             );
             if (!isIncluded){ //not included
                 continue;
@@ -432,63 +437,80 @@ async function sync_files(dir1, dir2){
     return Date.now();
 }
 
-async function isSyncAllowed(scheduleSettings, last_sync){
-    //todo NB!! task_active_toggle in widget = schedule enabled in task editor!!! (shortcut)
+async function isSyncAllowed(scheduleSettings, last_sync, DBFile) {
+    scheduleSettings = await get_schedule_settings_fromDB(DBFile);
 
-    let newRunEvery = interpret_run_every_time(scheduleSettings.run_every);
-    let newDelay =    interpret_delay_until_start(scheduleSettings.delay)
-    let newTimeSpan = interpret_ignore_timespan(scheduleSettings.time_span);
+    const newRunEvery =
+        await interpret_run_every_time(scheduleSettings.run_every);
 
-    scheduleSettings = get_schedule_settings_fromDB()
-    if (!newDelay){
+    let newDelay =
+        await interpret_delay_until_start(scheduleSettings.delay);
+
+    if (!newDelay) {
         newDelay = 0;
     }
-    const now = Date.now();
-    const start_time = now + newDelay
 
-    if (! last_sync){
-        return await run_sync(); //initial first run
+    const now = Date.now();
+
+    if (newDelay > 0) {
+        return last_sync;
     }
 
-    if (scheduleSettings.enabled){
-        if (now >= start_time){
-            if (scheduleSettings.ignore_time_span){
-                if(!(now >= newTimeSpan[0] && now <= newTimeSpan[1])){
-                    if (now < (last_sync + newRunEvery)){
-                        return last_sync;
-                    }
-                    else {
-                        const folders = get_folders_fromDB();
-                        last_sync = sync_files(folders[0], folders[2])
-                        return last_sync;
-                    }
-                }else{
-                    return last_sync; // no
-                }
-            }
-            else{
-                if (now < (last_sync + newRunEvery)){
+    if (!last_sync) {
+        return await run_sync();
+    }
+
+        if (scheduleSettings.ignore_time_span) {
+
+            const newTimeSpan =
+                await interpret_ignore_timespan(
+                    scheduleSettings.time_span
+                );
+
+            if (
+                !(now >= newTimeSpan[0] &&
+                    now <= newTimeSpan[1])
+            ) {
+
+                if (now < (last_sync + newRunEvery)) {
                     return last_sync;
-                }
-                else {
+                } else {
                     return await run_sync();
                 }
+
+            } else {
+                return last_sync;
             }
+
+        } else {
+
+            if (now < (last_sync + newRunEvery)) {
+                return last_sync;
+            } else {
+                return await run_sync();
+            }
+
         }
-    }
-    else {
-        return last_sync;
-    }
 
-    async function run_sync(){
-        const folders = get_folders_fromDB();
-        last_sync =  await sync_files(folders[0], folders[2])
-        return last_sync;
-    }
 
+    async function run_sync() {
+        const folders = await get_folders_fromDB(DBFile);
+
+        const newSyncTime = Date.now();
+
+        await sync_files(
+            folders[0],
+            folders[1],
+            DBFile
+        );
+
+        await update_last_sync(DBFile, newSyncTime);
+
+        return newSyncTime;
+    }
 }
 
-function saveTaskInTaskList(taskId, taskName, configFilePath) {
+async function saveTaskInTaskList(taskId, taskName, configFilePath) {
     const TaskListPath = path.join(process.cwd(), "data", "tasks_list.json");
 
     let taskListData = { tasks: [] };
@@ -518,7 +540,7 @@ function saveTaskInTaskList(taskId, taskName, configFilePath) {
     }
 }
 
-async function save_updateTaskInDB(taskId, taskName, dir1, dir2, delete_file_method, versioning_folder, sync_mode, filter_settings, schedule_settings){
+async function save_updateTaskInDB(taskId, taskName, dir1, dir2, delete_file_method, versioning_folder, sync_mode, filter_settings, schedule_settings, last_sync_time){
 
     if (!taskId) taskId = uuidv4();
 
@@ -542,6 +564,8 @@ async function save_updateTaskInDB(taskId, taskName, dir1, dir2, delete_file_met
     const filters = { include, exclude, size_min, size_max };
     const schedule = schedule_settings ? { ...schedule_settings } : {};
 
+    const last_sync = last_sync_time ? last_sync_time : null;
+
     const newConfig = {
         id: taskId,
         taskName,
@@ -551,9 +575,7 @@ async function save_updateTaskInDB(taskId, taskName, dir1, dir2, delete_file_met
         sync_mode,
         filters,
         schedule,
-        folders_meta: {
-            versioning_folder: normVersioningFolder
-        }
+        last_sync
     };
 
     let finalConfig = newConfig;
@@ -588,7 +610,7 @@ async function save_updateTaskInDB(taskId, taskName, dir1, dir2, delete_file_met
 
     await fsp.writeFile(dbFilePath, JSON.stringify(finalConfig, null, 2), "utf8");
 
-    saveTaskInTaskList(taskId, taskName, normalize(dbFilePath));
+    await saveTaskInTaskList(taskId, taskName, normalize(dbFilePath));
 
     return dbFilePath;
 }
@@ -613,7 +635,7 @@ async function removeTaskFromDB(dirOrDbFile){
 
 // Get info from DB :
 
-function get_folders_fromDB(DBFile){
+async function get_folders_fromDB(DBFile){
     const dbFilePath = resolveTaskDbFilePath(DBFile);
 
     if (!fs.existsSync(dbFilePath)) {
@@ -641,7 +663,7 @@ function get_folders_fromDB(DBFile){
     }
 }
 
-function get_sync_mode_fromDB(DBFile){
+async function get_sync_mode_fromDB(DBFile){
     const dbFilePath = resolveTaskDbFilePath(DBFile);
 
     const fallbackMode = SYNC_MODES[2];
@@ -673,7 +695,7 @@ function get_sync_mode_fromDB(DBFile){
     }
 }
 
-function get_delete_file_method_fromDB(DBFile){
+async function get_delete_file_method_fromDB(DBFile){
     const dbFilePath = resolveTaskDbFilePath(DBFile);
 
     const fallbackMethod = DELETE_OVERWRITE_METHODS[1];
@@ -705,7 +727,7 @@ function get_delete_file_method_fromDB(DBFile){
     }
 }
 
-function get_filter_settings_fromDB(DBFile) {
+async function get_filter_settings_fromDB(DBFile) {
     const dbFilePath = resolveTaskDbFilePath(DBFile);
 
     const fallbackFilters = {
@@ -745,7 +767,7 @@ function get_filter_settings_fromDB(DBFile) {
     }
 }
 
-function get_schedule_settings_fromDB(DBFile) {
+async function get_schedule_settings_fromDB(DBFile) {
     const dbFilePath = resolveTaskDbFilePath(DBFile);
 
     const fallbackSchedule = {
@@ -797,43 +819,72 @@ function get_schedule_settings_fromDB(DBFile) {
     }
 }
 
-function get_versioning_folder_fromDB(DBFile) {
+async function get_versioning_folder_fromDB(DBFile) {
     const dbFilePath = resolveTaskDbFilePath(DBFile);
 
-    const fallbackVersioningFolder = normalize(path.join(path.dirname(dbFilePath), ".purrup-versioning"));
-
     if (!fs.existsSync(dbFilePath)) {
-        console.error(`Task DB file not found: ${dbFilePath}. Using fallback versioning folder.`);
-        return fallbackVersioningFolder;
+        console.error(`Task DB file not found: ${dbFilePath}`);
+        return "";
     }
 
     try {
         const raw = fs.readFileSync(dbFilePath, "utf8");
         const config = JSON.parse(raw);
 
-        const direct = typeof config.versioning_folder === "string" ? config.versioning_folder.trim() : "";
-        const fromMeta = (
-            config.folders_meta &&
-            typeof config.folders_meta.versioning_folder === "string"
-        ) ? config.folders_meta.versioning_folder.trim() : "";
-
-        const versioningFolder = direct || fromMeta;
-
-        if (!versioningFolder) {
-            console.error("Versioning folder is not set in task DB. Using fallback versioning folder.");
-            return fallbackVersioningFolder;
-        }
-
-        return normalize(versioningFolder);
+        return config.versioning_folder || "";
     } catch (err) {
-        console.error(`Failed to read versioning folder from task DB (${dbFilePath}):`, err);
-        return fallbackVersioningFolder;
+        console.error(
+            `Failed to read versioning folder from task DB (${dbFilePath}):`,
+            err
+        );
+        return "";
     }
 }
 
-function get_task_name_by_id(taskId){
-    const DBFile = []
-    return DBFile;
+async function get_last_sync_fromDB(DBFile) {
+    const dbFilePath = resolveTaskDbFilePath(DBFile);
+
+    if (!fs.existsSync(dbFilePath)) {
+        console.error(`Task DB file not found: ${dbFilePath}`);
+        return null;
+    }
+
+    try {
+        const raw = fs.readFileSync(dbFilePath, "utf8");
+        const config = JSON.parse(raw);
+
+        return config.last_sync || null;
+
+    } catch (err) {
+        console.error(`Failed to read last_sync from task DB (${dbFilePath}):`, err);
+        return null;
+    }
+}
+
+async function get_task_name_by_id(taskId){
+    let taskListData =[]
+    const TaskListPath = path.join(process.cwd(), "data", "tasks_list.json");
+    const raw = fs.readFileSync(TaskListPath, "utf-8");
+    taskListData = JSON.parse(raw);
+    const task = taskListData.tasks.find(t => t.id === taskId);
+
+    return task.name;
+}
+
+async function get_bd_file_by_id(taskId) {
+    const TaskListPath = path.join(process.cwd(), "data", "tasks_list.json");
+
+    const raw = fs.readFileSync(TaskListPath, "utf-8");
+    const taskListData = JSON.parse(raw);
+
+    const task = taskListData.tasks.find(t => t.id === taskId);
+
+    if (!task) {
+        console.error("Task not found in task list:", taskId);
+        return null;
+    }
+
+    return task.configFilePath;
 }
 
 // Get locally
@@ -846,7 +897,7 @@ function get_trash_folder(){
 
 // interpret info
 
-function interpret_run_every_time(run_every){
+async function interpret_run_every_time(run_every){
     // "30m", "1h", "1d"
     let ms;
     const time_value = Number(run_every.slice(0, -1));
@@ -864,7 +915,7 @@ function interpret_run_every_time(run_every){
     return ms;
 }
 
-function interpret_delay_until_start(start_time) {
+async function interpret_delay_until_start(start_time) {
     // "03:19"
 
     if (!start_time) {
@@ -892,7 +943,7 @@ function interpret_delay_until_start(start_time) {
     return target.getTime() - now.getTime();
 }
 
-function interpret_ignore_timespan(from, to) {
+async function interpret_ignore_timespan(from, to) {
     // "03:19", "13:20"
 
     function parseTimeToMs(timeString) {
@@ -913,6 +964,10 @@ function interpret_ignore_timespan(from, to) {
 }
 
 // Other helping funcs :
+
+function isTaskSettingsFileName(fileName) {
+    return typeof fileName === "string" && fileName.toLowerCase().endsWith("-settings.json");
+}
 
 function resolveTaskDbFilePath(dirOrDbFile) {
     // If an explicit JSON path is passed, use it directly.
@@ -1032,6 +1087,37 @@ async function moveFiles(list, dir2) {
     }
 }
 
+function matchPattern(fileName, pattern) {
+    if (pattern === "*") return true;
+
+    const regex = new RegExp(
+        "^" + pattern
+            .replace(/\./g, "\\.")
+            .replace(/\*/g, ".*") + "$"
+    );
+
+    return regex.test(fileName);
+}
+
+async function update_last_sync(DBFile, timestamp = Date.now()) {
+    const dbFilePath = resolveTaskDbFilePath(DBFile);
+
+    try {
+        const raw = fs.readFileSync(dbFilePath, "utf8");
+        const config = JSON.parse(raw);
+
+        config.last_sync = timestamp;
+
+        fs.writeFileSync(
+            dbFilePath,
+            JSON.stringify(config, null, 2),
+            "utf8"
+        );
+
+    } catch (err) {
+        console.error(`Failed to update last_sync (${dbFilePath}):`, err);
+    }
+}
 
 ////////////////////////////// exporting ////////////////////////////
 module.exports = {
@@ -1040,11 +1126,16 @@ module.exports = {
     sync_files,
     save_updateTaskInDB,
     removeTaskFromDB,
+    get_folders_fromDB,
     get_sync_mode_fromDB,
     get_delete_file_method_fromDB,
     get_filter_settings_fromDB,
     get_schedule_settings_fromDB,
-    get_versioning_folder_fromDB
+    get_versioning_folder_fromDB,
+    get_last_sync_fromDB,
+    get_task_name_by_id,
+    get_bd_file_by_id,
+    isSyncAllowed
 };
 
 
@@ -1053,4 +1144,4 @@ module.exports = {
 const dir_1 = "C:/Users/Seagulltoon/Desktop/1"
 const dir_2 = "C:/Users/Seagulltoon/Desktop/2"
 
-// console.log(saveTaskInTaskList("taskName", dir_2))
+// console.log(get_bd_file_by_id("d87a3d33-cf07-4a35-a31a-daf98df2ca59"));

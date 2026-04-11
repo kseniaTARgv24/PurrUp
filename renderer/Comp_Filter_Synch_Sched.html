@@ -148,12 +148,12 @@
 
     <div class="tab-panel" id="schedule">
 
-        <label class="flex gap-2 items-center text-sm"><input type="checkbox" class="accent-rose"> Enable schedule</label> <!--todo NB!! task_active_toggle in widget = schedule enabled in task editor!!! (shortcut)-->
+        <label  class="flex gap-2 items-center text-sm"><input id="schedule-enabled" type="checkbox" class="accent-rose"> Enable schedule</label> <!--todo NB!! task_active_toggle in widget = schedule enabled in task editor!!! (shortcut)-->
 
         <div class="ffs-row flex items-center gap-2 text-sm mt-3">
             <span>Run every</span>
             <input type="number" id="run-every-value" value="1" class="w-16 px-2 py-1 rounded-md border border-roseSoft bg-white/70">
-            <select class="px-2 py-1 rounded-md border border-roseSoft bg-white/70">
+            <select class="px-2 py-1 rounded-md border border-roseSoft bg-white/70" id="run-every-unit">
                 <option>minutes</option>
                 <option>hours</option>
                 <option>days</option>
@@ -182,7 +182,7 @@
         <button class="px-3 py-1.5 rounded-md bg-blush hover:bg-rose text-white" id="filter-default-btn">Default</button>
         <div class="ffs-spacer flex-1"></div>
         <button class="px-4 py-1.5 rounded-md bg-roseSoft hover:bg-rose text-white" id="filter-ok-btn" >OK</button>
-        <button class="px-4 py-1.5 rounded-md border border-roseSoft" id="filter-cancel-btn" onclick="window.api.closeWindow('Comp_Filter_Synch_Sched')">Cancel</button>
+        <button class="px-4 py-1.5 rounded-md border border-roseSoft" id="filter-cancel-btn">Cancel</button>
     </div>
 
 </div>
