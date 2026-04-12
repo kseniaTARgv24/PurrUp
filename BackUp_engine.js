@@ -1,15 +1,9 @@
-//for console testing:
-// import path from "path";
-// import fs from "fs";
-// import fsp from "fs/promises";
-// const { join, resolve, basename } = path;
-
-// for export:
 const path = require("path");
 const fs = require("fs");
 const fsp = require("fs/promises");
 const { join, resolve, basename } = path;
 const { v4: uuidv4 } = require("uuid");
+const {homedir} = require("node:os");
 
 ////////////////// Main funcs ///////////////
 
@@ -92,8 +86,28 @@ function compareDirs(dir1, dir2) {
 }
 
 //sync files (for testing, later in DB)
-const SYNC_MODES = ['Two way', 'Mirror', 'Update']
 const DELETE_OVERWRITE_METHODS = ["Recycle bin", "Permanent delete", "Versioning"]
+const DELETE_METHOD_MAP = {
+    "recycle": "Recycle bin",
+    "permanent": "Permanent delete",
+    "versioning": "Versioning"
+};
+const DELETE_METHOD_REVERSE_MAP = {
+    "Recycle bin": "recycle",
+    "Permanent delete": "permanent",
+    "Versioning": "versioning"
+};
+const SYNC_MODES = ['Two way', 'Mirror', 'Update']
+const SYNC_MODE_MAP = {
+    "two-way": "Two way",
+    "mirror": "Mirror",
+    "update": "Update"
+};
+const REVERSE_SYNC_MODE_MAP = {
+    "Two way": "two-way",
+    "Mirror": "mirror",
+    "Update": "update"
+};
 
 async function sync_files(dir1, dir2, DBFile){
 
@@ -103,12 +117,14 @@ async function sync_files(dir1, dir2, DBFile){
     let compare_result_list = compareDirs(dir1, dir2)  //|is in dir1 -- is in dir2 -- (if both TRUE) status (same or not)|  { file: 'b.txt', status: "in both dir's: same" }
 
     // user's sync settings
-    const sync_mode = await get_sync_mode_fromDB(DBFile);
-    const delete_file_method = await get_delete_file_method_fromDB(DBFile)
+    const raw_sync_mode = await get_sync_mode_fromDB(DBFile);
+    const sync_mode = SYNC_MODE_MAP[raw_sync_mode] || "Update";
+    const raw_delete_file_method = await get_delete_file_method_fromDB(DBFile)
+    const delete_file_method = DELETE_METHOD_MAP[raw_delete_file_method];
     const filterSettings = await get_filter_settings_fromDB(DBFile); // { include, exclude, size_min, size_max } --> {include: [ '*.txt', '*.docx' ], exclude: [ '*.tmp', '*.log' ], size_min: 0, size_max: 10000000 }
-    console.log("include "+ filterSettings.include);
-    console.log("filter "+ filterSettings);
+    // console.log("include "+ filterSettings.include);
     console.log("syncmode "+ sync_mode);
+    console.log("delete_file_method "+delete_file_method);
 
     console.log("before: ", compareDirs(dir1, dir2));
 
@@ -286,7 +302,8 @@ async function sync_files(dir1, dir2, DBFile){
                 }
                 else if (file.status === "only in dir2"){
                     // delete it
-                    switch(delete_file_method){
+                    switch (delete_file_method) {
+
                         case "Recycle bin": {
                             const src = path.join(dir2, file.file);
                             const dest = path.join(get_trash_folder(), file.file);
@@ -294,6 +311,7 @@ async function sync_files(dir1, dir2, DBFile){
                             await fsp.mkdir(path.dirname(dest), { recursive: true });
 
                             await fsp.copyFile(src, dest);
+                            await fsp.unlink(src);
 
                             break;
                         }
@@ -309,16 +327,21 @@ async function sync_files(dir1, dir2, DBFile){
                         case "Versioning": {
                             const src = path.join(dir2, file.file);
 
-                            const dest = await getUniquePath(get_versioning_folder_fromDB(), file.file);
+                            const dest = await getUniquePath(
+                                await get_versioning_folder_fromDB(DBFile),
+                                file.file
+                            );
 
                             await fsp.mkdir(path.dirname(dest), { recursive: true });
 
                             await fsp.copyFile(src, dest);
+                            await fsp.unlink(src);
 
                             break;
                         }
                     }
                 }
+
                 else if (file.status === "in both dir's: same"){
                     // do nothing
                 }
@@ -332,6 +355,7 @@ async function sync_files(dir1, dir2, DBFile){
                             await fsp.mkdir(path.dirname(dest), { recursive: true });
 
                             await fsp.copyFile(src, dest);
+                            await fsp.unlink(src);
 
                             break;
                         }
@@ -352,6 +376,7 @@ async function sync_files(dir1, dir2, DBFile){
                             await fsp.mkdir(path.dirname(dest), { recursive: true });
 
                             await fsp.copyFile(src, dest);
+                            await fsp.unlink(src);
 
                             break;
                         }
@@ -394,6 +419,7 @@ async function sync_files(dir1, dir2, DBFile){
                             await fsp.mkdir(path.dirname(dest), { recursive: true });
 
                             await fsp.copyFile(src, dest);
+                            await fsp.unlink(src);
 
                             break;
                         }
@@ -414,6 +440,7 @@ async function sync_files(dir1, dir2, DBFile){
                             await fsp.mkdir(path.dirname(dest), { recursive: true });
 
                             await fsp.copyFile(src, dest);
+                            await fsp.unlink(src);
 
                             break;
                         }
@@ -566,13 +593,14 @@ async function save_updateTaskInDB(taskId, taskName, dir1, dir2, delete_file_met
 
     const last_sync = last_sync_time ? last_sync_time : null;
 
+
     const newConfig = {
         id: taskId,
         taskName,
         folders,
-        delete_file_method,
+        delete_file_method: DELETE_METHOD_MAP[delete_file_method] || "Recycle bin",
         versioning_folder: normVersioningFolder,
-        sync_mode,
+        sync_mode: SYNC_MODE_MAP[sync_mode] || "Update",
         filters,
         schedule,
         last_sync
@@ -688,7 +716,7 @@ async function get_sync_mode_fromDB(DBFile){
             return fallbackMode;
         }
 
-        return sync_mode;
+        return REVERSE_SYNC_MODE_MAP[sync_mode] || "update";
     } catch (err) {
         console.error(`Failed to read sync mode from task DB (${dbFilePath}):`, err);
         return fallbackMode;
@@ -720,7 +748,7 @@ async function get_delete_file_method_fromDB(DBFile){
             return fallbackMethod;
         }
 
-        return delete_file_method;
+        return DELETE_METHOD_REVERSE_MAP[delete_file_method];
     } catch (err) {
         console.error(`Failed to read delete file method from task DB (${dbFilePath}):`, err);
         return fallbackMethod;
@@ -888,11 +916,29 @@ async function get_bd_file_by_id(taskId) {
 }
 
 // Get locally
-
+//https://stackoverflow.com/questions/936397/finding-the-recycle-bin-on-a-local-ntfs-drive/945561#945561
+//not the real hidden tf, maybe change later like in this link
 function get_trash_folder(){
-    // LOCAL
-    const trash_folder = "C:/Users/Seagulltoon/Desktop/Recycle Bin"
-    return trash_folder;
+    const homeDir = homedir();
+    let trashFolder;
+
+    if (process.platform === "win32") {
+        trashFolder = path.join(homeDir, "Recycle Bin");
+    } else if (process.platform === "darwin") {
+        trashFolder = path.join(homeDir, ".Trash");
+    } else {
+        trashFolder = path.join(homeDir, ".local", "share", "Trash", "files");
+    }
+
+    try {
+        fs.mkdirSync(trashFolder, { recursive: true });
+        return normalize(trashFolder);
+    } catch (err) {
+        console.error("Failed to prepare trash folder, using fallback:", err);
+        const fallbackTrash = path.join(process.cwd(), ".purrup-trash");
+        fs.mkdirSync(fallbackTrash, { recursive: true });
+        return normalize(fallbackTrash);
+    }
 }
 
 // interpret info
@@ -1144,4 +1190,4 @@ module.exports = {
 const dir_1 = "C:/Users/Seagulltoon/Desktop/1"
 const dir_2 = "C:/Users/Seagulltoon/Desktop/2"
 
-// console.log(get_bd_file_by_id("d87a3d33-cf07-4a35-a31a-daf98df2ca59"));
+console.log(get_trash_folder());

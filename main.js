@@ -80,8 +80,8 @@ function setDefaultTaskDraft() {
         taskName: "",
         dir1: "",
         dir2: "",
-        sync_mode: "two-way",
-        delete_file_method: "recycle",
+        sync_mode: "Two way",
+        delete_file_method: "Recycle bin",
 
         filter_settings: {
             include: "*",
@@ -90,7 +90,8 @@ function setDefaultTaskDraft() {
                 "\\$Recycle.Bin\\",
                 "\\RECYCLE?\\",
                 "\\Recovery\\",
-                "*thumbs.db"
+                "*thumbs.db",
+                "*-settings.json"
             ],
             size_min: 0,
             size_max: 10000000000
