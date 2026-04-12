@@ -210,6 +210,8 @@ function startSyncChecker(){
                 DBFile
             );
 
+            console.log("allowed:  "+allowed);
+
             if (allowed) {
                 console.log("SYNC NOW:", task.id);
 
@@ -221,6 +223,9 @@ function startSyncChecker(){
                     folders[1],
                     DBFile
                 );
+
+                await BackupEngine.update_last_sync(DBFile)
+
             }
         }
     }, 30 * 1000); // каждые 30 секунд
@@ -305,6 +310,7 @@ ipcMain.handle("save-task", async () => {
         windows["widget"].webContents.send("refresh-task-list");
     }
 
+
     return currentTaskDraft;
 });
 
@@ -317,8 +323,7 @@ ipcMain.handle("open-task-settings",async (event, taskId) => {
         console.error("DBFile not found for task:", taskId);
         return null;
     }
-    console.log("OPEN TASK ID:", taskId);
-    console.log("DB FILE:", DBFile);
+
     currentTaskDraft.sync_mode = await BackupEngine.get_sync_mode_fromDB(DBFile);
     currentTaskDraft.delete_file_method = await BackupEngine.get_delete_file_method_fromDB(DBFile);
     currentTaskDraft.filter_settings = await BackupEngine.get_filter_settings_fromDB(DBFile);
@@ -331,6 +336,11 @@ ipcMain.handle("open-task-settings",async (event, taskId) => {
 
     currentTaskDraft.taskName = await BackupEngine.get_task_name_by_id(taskId);
 
+    console.log("OPEN TASK ID:", taskId);
+    console.log("DB FILE:", DBFile);
+    console.log(currentTaskDraft.taskName);
+    console.log(currentTaskDraft.dir1);
+    console.log(currentTaskDraft.dir2);
     console.log("Draft loaded:", currentTaskDraft);
 
     openTaskEditorWindow()

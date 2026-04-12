@@ -26,5 +26,7 @@ contextBridge.exposeInMainWorld("api", {
     runTaskNow: (taskId) =>  ipcRenderer.invoke("run-task-now", taskId),
     getTaskList: () =>  ipcRenderer.invoke("get-task-list"),
     onRefreshDraftUI: (callback) => ipcRenderer.on("refresh-draft-ui", callback),
-    onRefreshTaskList: (callback) => ipcRenderer.on("refresh-task-list", callback)
+    onRefreshTaskList: (callback) => ipcRenderer.on("refresh-task-list", callback),
+    update_last_sync : (DBFile, timestamp = Date.now()) => ipcRenderer.invoke("update-last-sync", DBFile, timestamp),
+    saveTaskInTaskList: (taskId, taskName, configFilePath) => ipcRenderer.invoke("save-task-in-task-list", taskId, taskName, configFilePath),
 });

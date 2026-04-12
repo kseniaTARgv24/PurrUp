@@ -470,21 +470,18 @@ async function isSyncAllowed(scheduleSettings, last_sync, DBFile) {
     const newRunEvery =
         await interpret_run_every_time(scheduleSettings.run_every);
 
-    let newDelay =
+    let start_time =
         await interpret_delay_until_start(scheduleSettings.delay);
 
-    if (!newDelay) {
-        newDelay = 0;
-    }
 
     const now = Date.now();
 
-    if (newDelay > 0) {
+    if (now < start_time) {
         return last_sync;
     }
 
     if (!last_sync) {
-        return await run_sync();
+        return true;
     }
 
         if (scheduleSettings.ignore_time_span) {
@@ -498,46 +495,32 @@ async function isSyncAllowed(scheduleSettings, last_sync, DBFile) {
                 !(now >= newTimeSpan[0] &&
                     now <= newTimeSpan[1])
             ) {
-
                 if (now < (last_sync + newRunEvery)) {
-                    return last_sync;
+                    console.log("now is "+ now + ", start at "+ last_sync+newRunEvery);
+                    return false;
                 } else {
-                    return await run_sync();
+                    return true;
                 }
 
             } else {
-                return last_sync;
+                console.log("forbitten timespan");
+                return false;
             }
 
         } else {
 
             if (now < (last_sync + newRunEvery)) {
-                return last_sync;
+                console.log("now is "+ now + ", start at "+ last_sync+newRunEvery);
+                return false;
             } else {
-                return await run_sync();
+                return true;
             }
 
         }
 
-
-    async function run_sync() {
-        const folders = await get_folders_fromDB(DBFile);
-
-        const newSyncTime = Date.now();
-
-        await sync_files(
-            folders[0],
-            folders[1],
-            DBFile
-        );
-
-        await update_last_sync(DBFile, newSyncTime);
-
-        return newSyncTime;
-    }
 }
 
-async function saveTaskInTaskList(taskId, taskName, configFilePath) {
+async function saveTaskInTaskList(taskId, taskName, configFilePath) { //todo rename to saveUpdate...
     const TaskListPath = path.join(process.cwd(), "data", "tasks_list.json");
 
     let taskListData = { tasks: [] };
@@ -551,19 +534,24 @@ async function saveTaskInTaskList(taskId, taskName, configFilePath) {
         }
     }
 
-    const exists = taskListData.tasks.some(task => task.id === taskId);
+    const taskIndex = taskListData.tasks.findIndex(task => task.id === taskId);
 
-    if (!exists) {
-        taskListData.tasks.push({
-            id: taskId,
-            name: taskName,
-            configFilePath
-        });
+    const newTask={
+        id: taskId,
+        name: taskName,
+        configFilePath:configFilePath
+    }
+    console.log("taskIndex: ", taskIndex);
 
+    if (taskIndex !== -1) { //so if exists --> rewrite
+        taskListData.tasks[taskIndex]=newTask;
+        fs.writeFileSync(TaskListPath, JSON.stringify(taskListData, null, 2));
+        return false;
+
+    } else {
+        taskListData.tasks.push(newTask);
         fs.writeFileSync(TaskListPath, JSON.stringify(taskListData, null, 2));
         return true;
-    } else {
-        return false;
     }
 }
 
@@ -582,8 +570,9 @@ async function save_updateTaskInDB(taskId, taskName, dir1, dir2, delete_file_met
     const normVersioningFolder = versioning_folder ? normalize(versioning_folder) : null;
     // Prepare filters; always exclude the settings file from sync
     const include = (filter_settings && Array.isArray(filter_settings.include)) ? filter_settings.include : [];
-    const excludeRaw = (filter_settings && Array.isArray(filter_settings.exclude)) ? filter_settings.exclude : [];
-    const exclude = Array.from(new Set([...excludeRaw, DB_FILE_NAME]));
+    const exclude = (filter_settings && Array.isArray(filter_settings.exclude)) ? filter_settings.exclude : [];
+    // const excludeRaw = (filter_settings && Array.isArray(filter_settings.exclude)) ? filter_settings.exclude : [];
+    // const exclude = Array.from(new Set([...excludeRaw, DB_FILE_NAME]));
 
     const size_min = (filter_settings && typeof filter_settings.size_min === "number") ? filter_settings.size_min : 0;
     const size_max = (filter_settings && typeof filter_settings.size_max === "number") ? filter_settings.size_max : 0;
@@ -962,31 +951,17 @@ async function interpret_run_every_time(run_every){
 }
 
 async function interpret_delay_until_start(start_time) {
-    // "03:19"
-
     if (!start_time) {
-        return null;
+        return Date.now();
     }
 
-    const now = new Date();
+    const targetTime = new Date(start_time).getTime();
 
-    const [hours, minutes] = start_time
-        .split(":")
-        .map(Number);
-
-    const target = new Date(now);
-
-    target.setHours(hours);
-    target.setMinutes(minutes);
-    target.setSeconds(0);
-    target.setMilliseconds(0);
-
-    // если время уже прошло сегодня -> переносим на завтра
-    if (target <= now) {
-        target.setDate(target.getDate() + 1);
+    if (isNaN(targetTime)) {
+        return Date.now();
     }
 
-    return target.getTime() - now.getTime();
+    return targetTime;
 }
 
 async function interpret_ignore_timespan(from, to) {
@@ -1181,13 +1156,23 @@ module.exports = {
     get_last_sync_fromDB,
     get_task_name_by_id,
     get_bd_file_by_id,
-    isSyncAllowed
+    isSyncAllowed,
+    update_last_sync,
+    saveTaskInTaskList
 };
 
 
 /////////////////////////////// funcs tests ///////////////////////////
 
-const dir_1 = "C:/Users/Seagulltoon/Desktop/1"
-const dir_2 = "C:/Users/Seagulltoon/Desktop/2"
+// const dir_1 = "C:/Users/Seagulltoon/Desktop/1"
+// const dir_2 = "C:/Users/Seagulltoon/Desktop/2"
 
-console.log(get_trash_folder());
+
+let taskListData = { tasks: [    {
+        "id": "fdc673a0-f5e1-46dd-bfd3-cee30cb2e198",
+        "name": "twoway",
+        "configFilePath": "C:/Users/Seagulltoon/Desktop/e2/fdc673a0-f5e1-46dd-bfd3-cee30cb2e198-settings.json"
+    }] };
+let taskIndex= taskListData.tasks.findIndex(task => task.id === "fdc673a0-f5e1-46dd-bfd3-cee30cb2e198")
+console.log(taskListData.tasks[taskIndex]);
+
