@@ -648,9 +648,10 @@ async function removeTaskFromDB(dirOrDbFile){
     }
 }
 
+
 //////////// Helper funcs ///////////////
 
-// Get info from DB :
+// Get info:
 
 async function get_folders_fromDB(DBFile){
     const dbFilePath = resolveTaskDbFilePath(DBFile);
@@ -904,7 +905,6 @@ async function get_bd_file_by_id(taskId) {
     return task.configFilePath;
 }
 
-// Get locally
 //https://stackoverflow.com/questions/936397/finding-the-recycle-bin-on-a-local-ntfs-drive/945561#945561
 //not the real hidden tf, maybe change later like in this link
 function get_trash_folder(){
@@ -985,6 +985,10 @@ async function interpret_ignore_timespan(from, to) {
 }
 
 // Other helping funcs :
+
+async function removeConfigFileFromFolder(DBFile){
+    await fsp.unlink(DBFile)
+}
 
 function isTaskSettingsFileName(fileName) {
     return typeof fileName === "string" && fileName.toLowerCase().endsWith("-settings.json");
@@ -1158,7 +1162,8 @@ module.exports = {
     get_bd_file_by_id,
     isSyncAllowed,
     update_last_sync,
-    saveTaskInTaskList
+    saveTaskInTaskList,
+    removeConfigFileFromFolder
 };
 
 
@@ -1168,11 +1173,11 @@ module.exports = {
 // const dir_2 = "C:/Users/Seagulltoon/Desktop/2"
 
 
-let taskListData = { tasks: [    {
-        "id": "fdc673a0-f5e1-46dd-bfd3-cee30cb2e198",
-        "name": "twoway",
-        "configFilePath": "C:/Users/Seagulltoon/Desktop/e2/fdc673a0-f5e1-46dd-bfd3-cee30cb2e198-settings.json"
-    }] };
-let taskIndex= taskListData.tasks.findIndex(task => task.id === "fdc673a0-f5e1-46dd-bfd3-cee30cb2e198")
-console.log(taskListData.tasks[taskIndex]);
+// let taskListData = { tasks: [    {
+//         "id": "fdc673a0-f5e1-46dd-bfd3-cee30cb2e198",
+//         "name": "twoway",
+//         "configFilePath": "C:/Users/Seagulltoon/Desktop/e2/fdc673a0-f5e1-46dd-bfd3-cee30cb2e198-settings.json"
+//     }] };
+// let taskIndex= taskListData.tasks.findIndex(task => task.id === "fdc673a0-f5e1-46dd-bfd3-cee30cb2e198")
+// console.log(taskListData.tasks[taskIndex]);
 

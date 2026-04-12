@@ -29,4 +29,5 @@ contextBridge.exposeInMainWorld("api", {
     onRefreshTaskList: (callback) => ipcRenderer.on("refresh-task-list", callback),
     update_last_sync : (DBFile, timestamp = Date.now()) => ipcRenderer.invoke("update-last-sync", DBFile, timestamp),
     saveTaskInTaskList: (taskId, taskName, configFilePath) => ipcRenderer.invoke("save-task-in-task-list", taskId, taskName, configFilePath),
+    removeConfigFileFromFolder: (DBFile) => ipcRenderer.invoke("remove-config-fileFromFolder", DBFile)
 });

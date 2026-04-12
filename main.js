@@ -3,6 +3,7 @@ const path = require("path");
 const { ipcMain } = require("electron");
 const BackupEngine = require("./BackUp_engine");
 const fs = require("fs/promises");
+const {get_bd_file_by_id} = require("./BackUp_engine");
 
 let windows = {};
 let currentTaskDraft ={
@@ -156,10 +157,31 @@ async function toggleSchedule(enabled, taskId) {
     const filter_settings = await BackupEngine.get_filter_settings_fromDB(DBFile);
     const schedule_settings = await BackupEngine.get_schedule_settings_fromDB(DBFile);
 
-    const updatedSchedule = {
-        ...schedule_settings,
-        enabled
-    };
+    let updatedSchedule = {}
+
+    console.log(enabled, " ", schedule_settings.delay)
+
+    if (enabled === true && !schedule_settings.delay){
+        console.log("setting new delay")
+        const now = new Date();
+        const localNow = new Date(
+            now.getTime() - now.getTimezoneOffset() * 60000
+        )
+            .toISOString()
+            .slice(0, 16);
+
+        updatedSchedule = {
+            ...schedule_settings,
+            enabled: enabled,
+            delay: localNow
+        };
+    }
+    else {
+        updatedSchedule = {
+            ...schedule_settings,
+            enabled
+        };
+    }
 
     console.log("toggleSchedule now: "+ enabled);
 
@@ -283,6 +305,7 @@ ipcMain.handle("get-default-task-draft", async () => {
 });
 
 ipcMain.handle("update-task-draft", (event, partialData) => {
+
     currentTaskDraft = {
         ... currentTaskDraft,
         ... partialData
@@ -292,6 +315,12 @@ ipcMain.handle("update-task-draft", (event, partialData) => {
 });
 
 ipcMain.handle("save-task", async () => {
+
+    const CurrentBDFile = await get_bd_file_by_id(currentTaskDraft.taskId);
+    const folders = await BackupEngine.get_folders_fromDB(CurrentBDFile);
+    const oldDir2 = folders[1];
+    const newDir2 = currentTaskDraft.dir2
+
     await BackupEngine.save_updateTaskInDB(
         currentTaskDraft.taskId,
         currentTaskDraft.taskName,
@@ -303,6 +332,13 @@ ipcMain.handle("save-task", async () => {
         currentTaskDraft.filter_settings,
         currentTaskDraft.schedule_settings
     );
+
+    if (oldDir2 && oldDir2 !== "") {
+        if (newDir2 !== oldDir2) {
+            console.log(oldDir2);
+            await BackupEngine.removeConfigFileFromFolder(CurrentBDFile);
+        }
+    }
 
     currentTaskDraft = setDefaultTaskDraft();
 
