@@ -121,6 +121,9 @@ function openTaskEditorWindow() {
             "refresh-draft-ui",
             currentTaskDraft
         );
+        if (windows[windowName]) {
+            windows[windowName].webContents.send("reset-ui");
+        }
 
         windows[windowName].show();
         windows[windowName].focus();
@@ -134,6 +137,7 @@ function openTaskEditorWindow() {
                 "refresh-draft-ui",
                 currentTaskDraft
             );
+            windows[windowName].webContents.send("reset-ui");
         });
 
         windows[windowName].show();
@@ -256,6 +260,7 @@ function startSyncChecker(){
 app.whenReady().then(() => {
     createAllWindows();
     startSyncChecker();
+    setDefaultTaskDraft()
 });
 
 app.on("window-all-closed", () => {
@@ -274,6 +279,10 @@ ipcMain.on("open-window", (event, name) => {
         });
         windows[name].show();
         windows[name].focus();}
+
+    if (name === "Comp_Filter_Synch_Sched"){
+        windows[name].webContents.send("reset-ui");
+    }
 });
 
 ipcMain.on("hide-window", (event, name) => {
@@ -282,6 +291,10 @@ ipcMain.on("hide-window", (event, name) => {
     }else {
         createWindow(name, `${name}.html`);
         windows[name].hide();}
+
+    if (name === "taskEditor"){
+        windows["Comp_Filter_Synch_Sched"].hide();
+    }
 });
 
 ipcMain.handle("compare-dirs", (event, dir1, dir2) => {
@@ -310,7 +323,7 @@ ipcMain.handle("update-task-draft", (event, partialData) => {
         ... currentTaskDraft,
         ... partialData
     };
-    console.log(JSON.stringify(currentTaskDraft, null, 2));
+    // console.log(JSON.stringify(currentTaskDraft, null, 2));
     return currentTaskDraft;
 });
 
@@ -335,7 +348,7 @@ ipcMain.handle("save-task", async () => {
 
     if (oldDir2 && oldDir2 !== "") {
         if (newDir2 !== oldDir2) {
-            console.log(oldDir2);
+            // console.log(oldDir2);
             await BackupEngine.removeConfigFileFromFolder(CurrentBDFile);
         }
     }
@@ -372,12 +385,12 @@ ipcMain.handle("open-task-settings",async (event, taskId) => {
 
     currentTaskDraft.taskName = await BackupEngine.get_task_name_by_id(taskId);
 
-    console.log("OPEN TASK ID:", taskId);
-    console.log("DB FILE:", DBFile);
-    console.log(currentTaskDraft.taskName);
-    console.log(currentTaskDraft.dir1);
-    console.log(currentTaskDraft.dir2);
-    console.log("Draft loaded:", currentTaskDraft);
+    // console.log("OPEN TASK ID:", taskId);
+    // console.log("DB FILE:", DBFile);
+    // console.log(currentTaskDraft.taskName);
+    // console.log(currentTaskDraft.dir1);
+    // console.log(currentTaskDraft.dir2);
+    // console.log("Draft loaded:", currentTaskDraft);
 
     openTaskEditorWindow()
 
@@ -420,3 +433,24 @@ ipcMain.handle("run-task-now", async (event, taskId) => {
 ipcMain.handle("get-task-list", async () => {
     return await getTaskList();
 });
+
+ipcMain.handle("check-path-exists", async (event, p) => {
+    try {
+        await fs.access(p)
+        return true;
+
+    } catch {
+        return false;
+    }
+});
+
+ipcMain.handle("delete-task", async (event, taskId) => {
+    const dbFile = await BackupEngine.get_bd_file_by_id(taskId);
+    await BackupEngine.removeTaskFromDB(dbFile)
+    setDefaultTaskDraft()
+    if (windows["widget"]) {
+        windows["widget"].webContents.send("refresh-task-list");
+    }
+    windows["taskEditor"].hide()
+    windows["Comp_Filter_Synch_Sched"].hide();
+})

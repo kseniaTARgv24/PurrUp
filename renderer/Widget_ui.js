@@ -12,6 +12,11 @@ window.addEventListener("DOMContentLoaded", async () => {
         });
     }
 
+    document.getElementById("widget-pin").addEventListener("click", async () => {
+        toggle_drag(document.body)
+    })
+
+
 });
 
 window.api.onRefreshTaskList(refreshTaskListWidget);
@@ -79,4 +84,16 @@ async function syncTaskListUI(taskList) {
 async function refreshTaskListWidget() {
     const taskList = await window.api.getTaskList();
     await syncTaskListUI(taskList);
+}
+
+function toggle_drag(el) {
+    if (!el) return;
+
+    if (el.classList.contains("drag-enabled")) {
+        el.classList.remove("drag-enabled");
+        el.classList.add("no-drag");
+    } else {
+        el.classList.add("drag-enabled");
+        el.classList.remove("no-drag");
+    }
 }

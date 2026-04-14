@@ -6,22 +6,9 @@
 <head>
     <meta charset="UTF-8" />
     <title>Task Editor</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme:{
-                extend:{
-                    colors:{
-                        cream:"#fff7f5",
-                        blush:"#f8dede",
-                        rose:"#e9b8c4",
-                        roseSoft:"#f4cfd6",
-                        ink:"#5a4a4e"
-                    }
-                }
-            }
-        }
-    </script>
+
+    <link rel="stylesheet" href="../dist/output.css">
+
 </head>
 
 <body class="app-window bg-cream text-ink p-6">
@@ -33,7 +20,7 @@
     <div class="header-actions flex gap-2">
         <button class="compare-btn px-3 py-1.5 rounded-md bg-blush hover:bg-roseSoft" id="compare-btn">Compare</button>
         <button class="save-task-btn px-3 py-1.5 rounded-md bg-rose text-white hover:bg-roseSoft" id="save-task-btn">SAVE TASK</button>
-        <button class="settings-btn px-3 py-1.5 rounded-md border border-roseSoft" id="settings-btn" onclick="window.api.openWindow('Comp_Filter_Synch_Sched')">
+        <button class="settings-btn px-3 py-1.5 rounded-md border border-roseSoft" id="settings-btn">
             Settings
         </button>
     </div>
@@ -97,8 +84,33 @@
 </div>
 
 <!-- STATUS -->
-<div class="status-bar mt-3 px-3 py-1.5 text-xs bg-blush/30 border border-roseSoft rounded-md" id="status-bar">
+<div class="status-bar mt-3 px-3 py-1.5 text-xs bg-blush/30 border border-roseSoft rounded-md " id="status-bar">
     Statistics: 0 files
+</div>
+
+<div  class="delete-task mt-3 px-3 py-3 text-xs bg-blush/30 border border-roseSoft rounded-md flex flex-col items-center gap-3">
+
+    <div id="delete-container" class="flex items-center justify-center gap-2 w-full">
+        <button id="delete-task-btn"
+                class="px-4 py-2 rounded-md bg-blush hover:bg-roseSoft transition">
+            Delete this task
+        </button>
+    </div>
+
+    <div id="delete-confirm-container" class="flex items-center justify-center gap-3 w-full hidden">
+        <p class="text-center">Are you sure?</p>
+
+        <button id="yes-delete-btn"
+                class="px-4 py-2 rounded-md bg-blush hover:bg-red-500 transition">
+            Yes
+        </button>
+
+        <button id="no-delete-btn"
+                class="px-4 py-2 rounded-md bg-white/50 hover:bg-white transition">
+            No
+        </button>
+    </div>
+
 </div>
 
 <script type="module" src="dataCollector.js"></script>

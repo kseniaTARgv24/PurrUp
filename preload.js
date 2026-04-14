@@ -11,8 +11,6 @@ contextBridge.exposeInMainWorld("api", {
     get_filter_settings_fromDB: (taskName) =>ipcRenderer.invoke("get-filter-settings-db", taskName),
     get_schedule_settings_fromDB: (taskName) =>ipcRenderer.invoke("get-schedule-settings-db", taskName),
     get_versioning_folder_fromDB: (taskName) =>ipcRenderer.invoke("get-versioning-folder-db", taskName),
-    openWindow: (name) => ipcRenderer.send("open-window", name),
-    hideWindow: (name) => ipcRenderer.send("hide-window", name),
     updateTaskDraft: (data) => ipcRenderer.invoke("update-task-draft", data),
     saveTask: () => ipcRenderer.invoke("save-task"),
     openTaskSettings: (taskId) => ipcRenderer.invoke("open-task-settings", taskId),
@@ -25,9 +23,16 @@ contextBridge.exposeInMainWorld("api", {
     getDefaultTaskDraft: () =>  ipcRenderer.invoke("get-default-task-draft"),
     runTaskNow: (taskId) =>  ipcRenderer.invoke("run-task-now", taskId),
     getTaskList: () =>  ipcRenderer.invoke("get-task-list"),
-    onRefreshDraftUI: (callback) => ipcRenderer.on("refresh-draft-ui", callback),
-    onRefreshTaskList: (callback) => ipcRenderer.on("refresh-task-list", callback),
     update_last_sync : (DBFile, timestamp = Date.now()) => ipcRenderer.invoke("update-last-sync", DBFile, timestamp),
     saveTaskInTaskList: (taskId, taskName, configFilePath) => ipcRenderer.invoke("save-task-in-task-list", taskId, taskName, configFilePath),
-    removeConfigFileFromFolder: (DBFile) => ipcRenderer.invoke("remove-config-fileFromFolder", DBFile)
+    removeConfigFileFromFolder: (DBFile) => ipcRenderer.invoke("remove-config-fileFromFolder", DBFile),
+    checkPathExists: (p) => ipcRenderer.invoke("check-path-exists", p),
+    deleteTask: (taskId) => ipcRenderer.invoke("delete-task", taskId),
+
+    onRefreshDraftUI: (callback) => ipcRenderer.on("refresh-draft-ui", callback),
+    onRefreshTaskList: (callback) => ipcRenderer.on("refresh-task-list", callback),
+    onResetUI: (callback) => ipcRenderer.on("reset-ui", callback),
+
+    openWindow: (name) => ipcRenderer.send("open-window", name),
+    hideWindow: (name) => ipcRenderer.send("hide-window", name),
 });

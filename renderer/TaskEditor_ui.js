@@ -3,8 +3,18 @@ var api = window.api;
 const sourceInput = document.querySelector('.path-container .path-block:first-child .path-input');
 const targetInput = document.querySelector('.path-container .path-block:last-child .path-input');
 const compareBtn = document.querySelector('.compare-btn');
+const FSSBtn = document.getElementById('settings-btn');
+const taskName = document.getElementById("task-name");
+const paths = document.querySelectorAll(".path-block .path-input");
+const dir1 = paths[0];
+const dir2 = paths[1];
+const deleteBtn = document.getElementById('delete-task-btn');
+const delYesBtn = document.getElementById('yes-delete-btn');
+const delNoBtn = document.getElementById('no-delete-btn');
 
-compareBtn.addEventListener('click', async () => {
+window.addEventListener("DOMContentLoaded", async () => {
+
+    compareBtn.addEventListener('click', async () => {
         const dir1 = sourceInput.value;
         const dir2 = targetInput.value;
 
@@ -14,7 +24,62 @@ compareBtn.addEventListener('click', async () => {
         const dir1Files =  await window.api.scan_folder(dir1);
         const dir2Files =  await window.api.scan_folder(dir2);
         renderFileList(result, dir1Files, dir2Files);
+    });
+
+    document.getElementById("save-task-btn").addEventListener("click", async () => {
+
+        if (await fieldValidation_TaskEditor()) {
+            const taskData = collectTaskDataFromUI("taskEditor");
+
+            await window.api.updateTaskDraft(taskData);
+            await window.api.saveTask();
+            window.api.hideWindow("taskEditor");
+        }
+    });
+
+    FSSBtn.addEventListener("click", async () => {
+        const updatedDraft = collectTaskDataFromUI("taskEditor");
+        await window.api.updateTaskDraft(updatedDraft);
+        window.api.openWindow('Comp_Filter_Synch_Sched')
+    })
+
+    deleteBtn.addEventListener("click", async () => {
+        addHidden(document.getElementById("delete-container"))
+        removeHidden(document.getElementById("delete-confirm-container"))
+    })
+
+    delYesBtn.addEventListener("click", async () => {
+        const currentDraft = await window.api.getCurrentTaskDraft()
+        const taskId = currentDraft.taskId;
+        await window.api.deleteTask(taskId)
+    })
+
+    delNoBtn.addEventListener("click", async () => {
+        addHidden(document.getElementById("delete-confirm-container"))
+        removeHidden(document.getElementById("delete-container"))
+    })
+
 });
+
+window.api.onRefreshDraftUI(async () => {
+    const draft = await window.api.getCurrentTaskDraft();
+    fillTaskEditorUI(draft);
+});
+
+window.api.onResetUI(async () => {
+    markValid(taskName)
+    markValid(dir1)
+    markValid(dir2)
+    const currentDraft = await window.api.getCurrentTaskDraft()
+    if (!currentDraft.taskId){
+        addHidden(document.getElementById("delete-container"))
+        addHidden(document.getElementById("delete-confirm-container"))
+    }else {
+        addHidden(document.getElementById("delete-confirm-container"))
+        removeHidden(document.getElementById("delete-container"))
+    }
+    clearFileList()
+})
 
 function renderFileList(results, dir1Files, dir2Files) {
     const leftList = document.querySelector('.file-panel:first-child .file-list');
@@ -80,6 +145,24 @@ function renderFileList(results, dir1Files, dir2Files) {
     console.log("renderFileList done")
 }
 
+function clearFileList() {
+    const leftList = document.querySelector(
+        '.file-panel:first-child .file-list'
+    );
+
+    const rightList = document.querySelector(
+        '.file-panel:last-child .file-list'
+    );
+
+    if (leftList) {
+        leftList.innerHTML = "";
+    }
+
+    if (rightList) {
+        rightList.innerHTML = "";
+    }
+}
+
 function createEmptyRow() {
     const row = document.createElement('div');
     row.classList.add('px-2', 'py-1', 'text-sm', 'border-b', 'border-roseSoft');
@@ -93,22 +176,6 @@ function createEmptyRow() {
 
     return row;
 }
-
-window.addEventListener("DOMContentLoaded", async () => {
-
-    document.getElementById("save-task-btn").addEventListener("click", async () => {
-        const taskData = collectTaskDataFromUI("taskEditor");
-
-        await window.api.updateTaskDraft(taskData);
-        await window.api.saveTask();
-        window.api.hideWindow("taskEditor");
-    });
-});
-
-window.api.onRefreshDraftUI(async () => {
-    const draft = await window.api.getCurrentTaskDraft();
-    fillTaskEditorUI(draft);
-});
 
 function fillTaskEditorUI(currentTaskDraft) {
     const taskNameInput = document.querySelector(".task-name");
@@ -124,6 +191,107 @@ function fillTaskEditorUI(currentTaskDraft) {
 
     if (pathInputs[1]) {
         pathInputs[1].value = currentTaskDraft.dir2 || "";
+    }
+}
+
+async function fieldValidation_TaskEditor() {
+
+    let valid = true;
+    const taskName = document.getElementById("task-name");
+    const paths = document.querySelectorAll(".path-block .path-input");
+    const dir1 = paths[0];
+    const dir2 = paths[1];
+
+
+    // ======================
+    // TASK NAME
+    // ======================
+
+    if (taskName.value.trim() === "") {
+        markInvalid(taskName)
+        valid = false;
+    } else {
+        markValid(taskName)
+    }
+
+
+    if (dir1.value.trim() === "") {
+        markInvalid(dir1);
+        valid = false;
+    } else {
+        const exists = await window.api.checkPathExists(dir1.value);
+
+        if (!exists) {
+            markInvalid(dir1);
+            valid = false;
+            console.log("dir1 ", exists)
+        } else {
+            markValid(dir1);
+        }
+    }
+
+    if (dir2.value.trim() === "") {
+        markInvalid(dir2);
+        valid = false;
+    } else {
+        const exists = await window.api.checkPathExists(dir2.value);
+
+        if (!exists) {
+            markInvalid(dir2);
+            valid = false;
+        } else {
+            markValid(dir2);
+        }
+    }
+
+    if (dir1.value.trim() === dir2.value.trim()){
+        markInvalid(dir1);
+        markInvalid(dir2);
+        valid = false;
+    }
+
+    const currentDraft = await window.api.getCurrentTaskDraft()
+    const versioningFolder = currentDraft.versioning_folder
+    if (versioningFolder) {
+        if (dir1.value.trim() === versioningFolder
+            || dir2.value.trim() === versioningFolder){
+            markInvalid(dir1);
+            markInvalid(dir2);
+            valid = false;
+        }
+        else{
+            markValid(dir1);
+            markValid(dir2);
+        }
+    }
+
+
+    return valid;
+}
+
+function markInvalid(el) {
+    el.classList.remove("border-roseSoft");
+    el.classList.add("border-red-500");
+}
+
+function markValid(el) {
+    el.classList.remove("border-red-500");
+    el.classList.add("border-roseSoft");
+}
+
+function addHidden(el) {
+    if (!el) return;
+
+    if (!el.classList.contains("hidden")) {
+        el.classList.add("hidden");
+    }
+}
+
+function removeHidden(el) {
+    if (!el) return;
+
+    if (el.classList.contains("hidden")) {
+        el.classList.remove("hidden");
     }
 }
 

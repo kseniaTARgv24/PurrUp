@@ -3,106 +3,91 @@
 <head>
     <meta charset="UTF-8">
 
-    <script src="https://cdn.tailwindcss.com"></script>
-
-    <script>
-        tailwind.config = {
-            theme:{
-                extend:{
-                    colors:{
-                        cream:"#fff7f5",
-                        blush:"#f8dede",
-                        rose:"#e9b8c4",
-                        roseSoft:"#f4cfd6",
-                        ink:"#5a4a4e"
-                    }
-                }
-            }
-        }
-    </script>
+    <link rel="stylesheet" href="../dist/output.css">
 
     <link rel="stylesheet" href="widget_style.css">
 
 </head>
 
+<body class="bg-cream flex justify-center items-start p-6 drag-enabled ">
 
-<body class="bg-cream flex justify-center items-start p-6">
-
-<div class="widget w-[340px] flex flex-col gap-4">
-    <button
-            class="widget-pin
-                absolute
-                top-3
-                left-1/2
-                -translate-x-1/2
-                -translate-y-1/2
-                w-[15px]
-                h-[15px]
-                rounded-full
-                border
-                border-roseSoft
-                bg-white
-                shadow
-                transition
-                duration-200
-                hover:scale-110
-                z-20">
-    </button>
-    <!-- LOTTIE AREA -->
-    <div class="widget-animation
-        h-[160px]
-        rounded-2xl
-        border
-        border-roseSoft
-        bg-white/70
-        backdrop-blur
-        flex items-center justify-center">
-
-        <span class="text-xs text-ink/50">Lottie animation</span>
-
-    </div>
-
-
-    <!-- TOP BUTTONS -->
-    <div class="widget-buttons flex items-center gap-6">
-
-        <!-- LOGS -->
+    <div class="widget w-[340px] flex flex-col gap-4">
         <button
-                class="logs-btn
-w-[60px]
-h-[60px]
-rounded-xl
-border
-border-roseSoft
-bg-white/70
-transition
-duration-200
-hover:scale-110
-flex items-center justify-center"
-                onclick="window.api.openWindow('logs')"
-        >
+                id="widget-pin"
+                class="widget-pin
+                    absolute
+                    top-3
+                    left-1/2
+                    -translate-x-1/2
+                    -translate-y-1/2
+                    w-[15px]
+                    h-[15px]
+                    rounded-full
+                    border
+                    border-roseSoft
+                    bg-white
+                    shadow
+                    transition
+                    duration-200
+                    hover:scale-110
+                    z-20">
         </button>
+        <!-- LOTTIE AREA -->
+        <div class="widget-animation
+            h-[160px]
+            rounded-2xl
+            border
+            border-roseSoft
+            bg-white/70
+            backdrop-blur
+            flex items-center justify-center">
 
-
-        <!-- EDITOR -->
-        <button id="new-task-btn"
-                class="editor-btn w-[64px] h-[64px] rounded-full border border-roseSoft bg-white/70 transition duration-200 hover:scale-110 flex items-center justify-center"  >
-        </button>
-
-    </div>
-
-
-    <!-- TASK LIST -->
-    <div class="task-container relative">
-        <!-- fade bottom -->
-        <div class="pointer-events-none absolute bottom-0 left-0 right-2 h-6 bg-gradient-to-t from-cream to-transparent z-10"></div>
-
-        <div id="task-list-widget" class="task-scroll h-[260px] overflow-y-auto flex flex-col gap-3 pr-2">
-
-            <!-- TASK ITEM -->
+            <span class="text-xs text-ink/50">Lottie animation</span>
 
         </div>
-    </div>
+
+
+        <!-- TOP BUTTONS -->
+        <div class="widget-buttons flex items-center gap-6">
+
+            <!-- LOGS -->
+            <button
+                    class="logs-btn
+    w-[60px]
+    h-[60px]
+    rounded-xl
+    border
+    border-roseSoft
+    bg-white/70
+    transition
+    duration-200
+    hover:scale-110
+    flex items-center justify-center"
+                    onclick="window.api.openWindow('logs')"
+            >
+            </button>
+
+
+            <!-- EDITOR -->
+            <button id="new-task-btn"
+                    class="editor-btn w-[64px] h-[64px] rounded-full border border-roseSoft bg-white/70 transition duration-200 hover:scale-110 flex items-center justify-center"  >
+            </button>
+
+        </div>
+
+
+        <!-- TASK LIST -->
+        <div class="task-container relative">
+            <!-- fade bottom -->
+            <div class="pointer-events-none absolute bottom-0 left-0 right-2 h-6 bg-gradient-to-t from-cream to-transparent z-10"></div>
+
+            <div id="task-list-widget" class="task-scroll h-[260px] overflow-y-auto flex flex-col gap-3 pr-2">
+
+                <!-- TASK ITEM -->
+
+            </div>
+        </div></div>
+    </div>`
 
     <script src="Widget_ui.js"></script>
 </body>

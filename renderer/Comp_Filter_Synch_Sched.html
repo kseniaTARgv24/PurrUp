@@ -6,23 +6,9 @@
 <head>
     <meta charset="UTF-8">
     <title>Comp_Filter_Synch_Sched</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme:{
-                extend:{
-                    colors:{
-                        cream:"#fff7f5",
-                        blush:"#f8dede",
-                        rose:"#e9b8c4",
-                        roseSoft:"#f4cfd6",
-                        ink:"#5a4a4e"
-                    }
-                }
-            }
-        }
 
-    </script>
+    <link rel="stylesheet" href="../dist/output.css">
+
     <style>
         .tab-panel { display: none; }
         .tab-panel.active { display: block; }
@@ -30,6 +16,7 @@
             background: rgba(255,255,255,0.7);
         }
     </style>
+
 </head>
 
 <body class="bg-cream text-ink p-6">
@@ -42,7 +29,7 @@
 
 <div class="tab-content bg-white/70 backdrop-blur border border-roseSoft rounded-xl p-6 space-y-6 w-[680px]">
 
-    <div class="tab-panel active" id="filter">  <!--todo авто удаление лишних пробелов на конце!!!!!-->
+    <div class="tab-panel active" id="filter">
 
         <div class="ffs-row flex gap-8">
             <div class="ffs-col flex-1">
@@ -62,12 +49,12 @@
 
                 <div class="ffs-inline flex gap-2 items-center text-sm mb-2">
                     <span>Minimum</span>
-                    <input id="size-min" type="number" value="0" class="w-20 px-2 py-1 rounded-md border border-roseSoft bg-white/70">
+                    <input id="size-min" type="number" value="0" min="0" max="1000000" class="w-20 px-2 py-1 rounded-md border border-roseSoft bg-white/70">
                 </div>
 
                 <div class="ffs-inline flex gap-2 items-center text-sm">
                     <span>Maximum</span>
-                    <input id="size-max" type="number" value="0" class="w-20 px-2 py-1 rounded-md border border-roseSoft bg-white/70">
+                    <input id="size-max" type="number" value="0" min="0" max="1000000" class="w-20 px-2 py-1 rounded-md border border-roseSoft bg-white/70">
                 </div>
             </div>
 
@@ -137,7 +124,7 @@
                     <input
                             type="text"
                             id="version-folder-path"
-                            class="w-full border rounded-lg px-2 py-1"
+                            class="w-full border border-roseSoft rounded-lg px-2 py-1"
                             placeholder="C:/Backups/Versions"
                     >
                 </div>
@@ -152,7 +139,7 @@
 
         <div class="ffs-row flex items-center gap-2 text-sm mt-3">
             <span>Run every</span>
-            <input type="number" id="run-every-value" value="1" class="w-16 px-2 py-1 rounded-md border border-roseSoft bg-white/70">
+            <input type="number" id="run-every-value" value="1" min="1" max="1000000" class="w-16 px-2 py-1 rounded-md border border-roseSoft bg-white/70">
             <select class="px-2 py-1 rounded-md border border-roseSoft bg-white/70" id="run-every-unit">
                 <option>minutes</option>
                 <option>hours</option>
@@ -166,7 +153,7 @@
                     type="datetime-local"
                     id="start-time"
                     class="px-2 py-1 rounded-md border border-roseSoft bg-white/70"
-            >  <!--todo кнопка NOW для авто выставления текущего времени-->
+            >
         </div>
 
         <div class="ffs-row flex items-center gap-2 text-sm mt-3">

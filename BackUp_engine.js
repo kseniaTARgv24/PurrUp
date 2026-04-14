@@ -5,6 +5,15 @@ const { join, resolve, basename } = path;
 const { v4: uuidv4 } = require("uuid");
 const {homedir} = require("node:os");
 
+// import path from "node:path";
+// import fs from "node:fs";
+// import fsp from "node:fs/promises";
+// import os from "node:os";
+// import { v4 as uuidv4 } from "uuid";
+//
+// const { join, resolve, basename } = path;
+// const { homedir } = os;
+
 ////////////////// Main funcs ///////////////
 
 //get file list from folders in a form {file_relative_path: size, date}
@@ -108,6 +117,7 @@ const REVERSE_SYNC_MODE_MAP = {
     "Mirror": "mirror",
     "Update": "update"
 };
+
 
 async function sync_files(dir1, dir2, DBFile){
 
@@ -555,6 +565,17 @@ async function saveTaskInTaskList(taskId, taskName, configFilePath) { //todo ren
     }
 }
 
+async function removeTaskFromTaskList(taskId){
+    const TaskListPath = path.join(process.cwd(), "data", "tasks_list.json");
+    const raw = fs.readFileSync(TaskListPath, "utf-8");
+    let taskListData = JSON.parse(raw);
+    if (!Array.isArray(taskListData.tasks)) taskListData.tasks = []
+    const taskIndex = taskListData.tasks.findIndex(task => task.id === taskId);
+
+    taskListData.tasks.splice(taskIndex, 1);
+    fs.writeFileSync(TaskListPath, JSON.stringify(taskListData, null, 2));
+}
+
 async function save_updateTaskInDB(taskId, taskName, dir1, dir2, delete_file_method, versioning_folder, sync_mode, filter_settings, schedule_settings, last_sync_time){
 
     if (!taskId) taskId = uuidv4();
@@ -632,8 +653,12 @@ async function save_updateTaskInDB(taskId, taskName, dir1, dir2, delete_file_met
     return dbFilePath;
 }
 
-async function removeTaskFromDB(dirOrDbFile){
-    const dbFilePath = resolveTaskDbFilePath(dirOrDbFile);
+async function removeTaskFromDB(DbFile){
+    const dbFilePath = resolveTaskDbFilePath(DbFile);
+    const raw = await fsp.readFile(dbFilePath, "utf8");
+    const dbData = JSON.parse(raw);
+    const taskId = dbData.id
+
 
     if (!fs.existsSync(dbFilePath)) {
         return false;
@@ -641,13 +666,14 @@ async function removeTaskFromDB(dirOrDbFile){
 
     try {
         await fsp.unlink(dbFilePath);
+        await removeTaskFromTaskList(taskId)
         return true;
     } catch (err) {
         console.error(`Failed to remove task DB file (${dbFilePath}):`, err);
         throw err;
     }
-}
 
+}
 
 //////////// Helper funcs ///////////////
 
@@ -1017,8 +1043,7 @@ function resolveTaskDbFilePath(dirOrDbFile) {
         console.error(`Failed to resolve task DB file in ${baseDir}:`, err);
     }
 
-    // Default file name when no task settings file exists yet.
-    return path.join(baseDir, "task-settings.json");
+    return null
 }
 
 async function getUniquePath(dir, fileName) {
@@ -1169,15 +1194,5 @@ module.exports = {
 
 /////////////////////////////// funcs tests ///////////////////////////
 
-// const dir_1 = "C:/Users/Seagulltoon/Desktop/1"
-// const dir_2 = "C:/Users/Seagulltoon/Desktop/2"
-
-
-// let taskListData = { tasks: [    {
-//         "id": "fdc673a0-f5e1-46dd-bfd3-cee30cb2e198",
-//         "name": "twoway",
-//         "configFilePath": "C:/Users/Seagulltoon/Desktop/e2/fdc673a0-f5e1-46dd-bfd3-cee30cb2e198-settings.json"
-//     }] };
-// let taskIndex= taskListData.tasks.findIndex(task => task.id === "fdc673a0-f5e1-46dd-bfd3-cee30cb2e198")
-// console.log(taskListData.tasks[taskIndex]);
+// await removeTaskFromDB("C:/Users/Seagulltoon/Desktop/e2/4e8519d7-bad8-4fcc-9bbf-126896d79239-settings.json")
 
