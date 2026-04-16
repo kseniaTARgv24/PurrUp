@@ -39,6 +39,25 @@ function createWindow(name, file, options = {}) {
     windows[name].loadFile(path.join(__dirname, "renderer", file));
     windows[name].setMenu(null);
 
+    windows[name].on("close", () => {
+        if (name === "widget") {
+            for (const key in windows) {
+                const win = windows[key];
+
+                if (win && !win.isDestroyed()) {
+                    win.close();
+                }
+            }
+        } else if (name === "taskEditor") {
+            if (
+                windows["Comp_Filter_Synch_Sched"] &&
+                !windows["Comp_Filter_Synch_Sched"].isDestroyed()
+            ) {
+                windows["Comp_Filter_Synch_Sched"].close();
+            }
+        }
+    });
+
     // windows[name].webContents.openDevTools();
 
 }
@@ -291,10 +310,6 @@ ipcMain.on("hide-window", (event, name) => {
     }else {
         createWindow(name, `${name}.html`);
         windows[name].hide();}
-
-    if (name === "taskEditor"){
-        windows["Comp_Filter_Synch_Sched"].hide();
-    }
 });
 
 ipcMain.handle("compare-dirs", (event, dir1, dir2) => {
