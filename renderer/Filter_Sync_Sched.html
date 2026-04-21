@@ -5,9 +5,16 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Comp_Filter_Synch_Sched</title>
+    <title>Filter_Sync_Sched</title>
+
+    <meta
+            http-equiv="Content-Security-Policy"
+            content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline';"
+    />
 
     <link rel="stylesheet" href="../dist/output.css">
+
+    <link rel="stylesheet" href="Filter_Sync_Sched_style.css">
 
     <style>
         .tab-panel { display: none; }
@@ -19,15 +26,15 @@
 
 </head>
 
-<body class="bg-cream text-ink p-6">
+<body class="bg-cream text-ink p-6 drag-enabled">
 
-<div class="tabs flex gap-1 mb-4 bg-blush/40 p-1 rounded-xl w-fit">
+<div class="tabs flex gap-1 mb-4 bg-blush/40 p-1 rounded-xl w-fit no-drag">
     <button class="tab active px-4 py-2 rounded-lg text-sm" data-tab="filter">Filter</button>
     <button class="tab px-4 py-2 rounded-lg text-sm" data-tab="sync">Synchronization</button>
     <button class="tab px-4 py-2 rounded-lg text-sm" data-tab="schedule">Schedule</button>
 </div>
 
-<div class="tab-content bg-white/70 backdrop-blur border border-roseSoft rounded-xl p-6 space-y-6 w-[680px]">
+<div class="tab-content bg-white/70 backdrop-blur border border-roseSoft rounded-xl p-6 space-y-6 w-[680px] no-drag">
 
     <div class="tab-panel active" id="filter">
 

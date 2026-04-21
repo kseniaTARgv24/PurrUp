@@ -1,7 +1,5 @@
 var api = window.api;
 
-const sourceInput = document.querySelector('.path-container .path-block:first-child .path-input');
-const targetInput = document.querySelector('.path-container .path-block:last-child .path-input');
 const compareBtn = document.querySelector('.compare-btn');
 const FSSBtn = document.getElementById('settings-btn');
 const taskName = document.getElementById("task-name");
@@ -15,15 +13,23 @@ const delNoBtn = document.getElementById('no-delete-btn');
 window.addEventListener("DOMContentLoaded", async () => {
 
     compareBtn.addEventListener('click', async () => {
-        const dir1 = sourceInput.value;
-        const dir2 = targetInput.value;
 
-        const result = await window.api.compareDirs(dir1, dir2);
-        console.log(result);
+        const dir1_value = paths[0].value.trim();
+        const dir2_value = paths[1].value.trim();
 
-        const dir1Files =  await window.api.scan_folder(dir1);
-        const dir2Files =  await window.api.scan_folder(dir2);
-        renderFileList(result, dir1Files, dir2Files);
+        if( await window.api.checkPathExists(dir1_value) && await window.api.checkPathExists(dir2_value)) {
+            markValid(dir1);
+            markValid(dir2);
+            const result = await window.api.compareDirs(dir1_value, dir2_value);
+            const dir1Files = await window.api.scan_folder(dir1_value);
+            const dir2Files = await window.api.scan_folder(dir2_value);
+            renderFileList(result, dir1Files, dir2Files);
+        }else{
+            markInvalid(dir1);
+            markInvalid(dir2);
+            await resetUI();
+        }
+
     });
 
     document.getElementById("save-task-btn").addEventListener("click", async () => {
@@ -40,7 +46,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     FSSBtn.addEventListener("click", async () => {
         const updatedDraft = collectTaskDataFromUI("taskEditor");
         await window.api.updateTaskDraft(updatedDraft);
-        window.api.openWindow('Comp_Filter_Synch_Sched')
+        window.api.openWindow('Filter_Sync_Sched')
     })
 
     deleteBtn.addEventListener("click", async () => {
@@ -67,18 +73,7 @@ window.api.onRefreshDraftUI(async () => {
 });
 
 window.api.onResetUI(async () => {
-    markValid(taskName)
-    markValid(dir1)
-    markValid(dir2)
-    const currentDraft = await window.api.getCurrentTaskDraft()
-    if (!currentDraft.taskId){
-        addHidden(document.getElementById("delete-container"))
-        addHidden(document.getElementById("delete-confirm-container"))
-    }else {
-        addHidden(document.getElementById("delete-confirm-container"))
-        removeHidden(document.getElementById("delete-container"))
-    }
-    clearFileList()
+    await resetUI();
 })
 
 function renderFileList(results, dir1Files, dir2Files) {
@@ -141,8 +136,6 @@ function renderFileList(results, dir1Files, dir2Files) {
         leftList.appendChild(leftRow);
         rightList.appendChild(rightRow);
     });
-
-    console.log("renderFileList done")
 }
 
 function clearFileList() {
@@ -293,6 +286,21 @@ function removeHidden(el) {
     if (el.classList.contains("hidden")) {
         el.classList.remove("hidden");
     }
+}
+
+async function resetUI(){
+    markValid(taskName)
+    markValid(dir1)
+    markValid(dir2)
+    const currentDraft = await window.api.getCurrentTaskDraft()
+    if (!currentDraft.taskId){
+        addHidden(document.getElementById("delete-container"))
+        addHidden(document.getElementById("delete-confirm-container"))
+    }else {
+        addHidden(document.getElementById("delete-confirm-container"))
+        removeHidden(document.getElementById("delete-container"))
+    }
+    clearFileList()
 }
 
 

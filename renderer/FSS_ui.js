@@ -63,7 +63,7 @@ window.addEventListener("DOMContentLoaded", async () => {
         cancelBtn.addEventListener("click", async () => {
             const currentDraft = await window.api.getCurrentTaskDraft();
             fillFSSUI(currentDraft);
-            window.api.hideWindow("Comp_Filter_Synch_Sched");
+            window.api.hideWindow("Filter_Sync_Sched");
         });
     }
 
@@ -81,7 +81,7 @@ window.addEventListener("DOMContentLoaded", async () => {
                 const updatedDraft = collectTaskDataFromUI("fss");
                 await window.api.updateTaskDraft(updatedDraft);
 
-                window.api.hideWindow("Comp_Filter_Synch_Sched");
+                window.api.hideWindow("Filter_Sync_Sched");
             }
         });
     }

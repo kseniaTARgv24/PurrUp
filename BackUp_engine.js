@@ -85,11 +85,6 @@ function compareDirs(dir1, dir2) {
             status
         });
 
-        //найти файлы которые lData.size === rData.size &&
-        //                 lData.mtime.getTime() === rData.mtime.getTime() &&
-        //                 path.basename(leftFile.file) === path.basename(rightFile.file)
-        //   и изменить их статус на "moved: from ? to ?"
-
     }
     return compare_result;
 }
@@ -183,15 +178,15 @@ async function sync_files(dir1, dir2, DBFile){
                 if (file.status === "only in dir1"){
                     // copy file to dir2 // for example: file 'New folder\\c.txt'
                     // проверить, что есть такой путь во второй папке - New folder. Если нет- создать
-                    const src = path.join(dir_1, file.file);
-                    const dest = path.join(dir_2, file.file);
+                    const src = path.join(dir1, file.file);
+                    const dest = path.join(dir2, file.file);
                     await fsp.mkdir(path.dirname(dest), { recursive: true });
                     await fsp.copyFile(src, dest);
                 }
                 else if (file.status === "only in dir2"){
                     // copy file to dir1
-                    const src = path.join(dir_2, file.file);
-                    const dest = path.join(dir_1, file.file);
+                    const src = path.join(dir2, file.file);
+                    const dest = path.join(dir1, file.file);
                     await fsp.mkdir(path.dirname(dest), { recursive: true });
                     await fsp.copyFile(`${dir2}/${file.file}`, `${dir1}/${file.file}`);
                 }

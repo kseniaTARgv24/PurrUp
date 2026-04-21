@@ -50,10 +50,10 @@ function createWindow(name, file, options = {}) {
             }
         } else if (name === "taskEditor") {
             if (
-                windows["Comp_Filter_Synch_Sched"] &&
-                !windows["Comp_Filter_Synch_Sched"].isDestroyed()
+                windows["Filter_Sync_Sched"] &&
+                !windows["Filter_Sync_Sched"].isDestroyed()
             ) {
-                windows["Comp_Filter_Synch_Sched"].close();
+                windows["Filter_Sync_Sched"].close();
             }
         }
     });
@@ -74,6 +74,7 @@ function createAllWindows() {
         skipTaskbar: true,
         alwaysOnTop: false,
         alwaysOnBottom: true,
+        transparent: true,
         frame: false,
         show: true,
         focusable: true,
@@ -83,7 +84,7 @@ function createAllWindows() {
     createWindow("taskEditor", "taskEditor.html",{
         show:false,
     })
-    createWindow("Comp_Filter_Synch_Sched", "Comp_Filter_Synch_Sched.html",{
+    createWindow("Filter_Sync_Sched", "Filter_Sync_Sched.html",{
         show:false,
         frame: false,
         skipTaskbar: true,
@@ -299,7 +300,7 @@ ipcMain.on("open-window", (event, name) => {
         windows[name].show();
         windows[name].focus();}
 
-    if (name === "Comp_Filter_Synch_Sched"){
+    if (name === "Filter_Sync_Sched"){
         windows[name].webContents.send("reset-ui");
     }
 });
@@ -427,8 +428,8 @@ ipcMain.handle("is-schedule-enabled", async (event, taskId) => {
 ipcMain.handle("toggle-schedule", async (event, enabled, taskId) => {
     await toggleSchedule(enabled, taskId);
 
-    if (windows["Comp_Filter_Synch_Sched"]) {
-        windows["Comp_Filter_Synch_Sched"].webContents.send("refresh-draft-ui");
+    if (windows["Filter_Sync_Sched"]) {
+        windows["Filter_Sync_Sched"].webContents.send("refresh-draft-ui");
     }
 
     return true;
@@ -467,5 +468,5 @@ ipcMain.handle("delete-task", async (event, taskId) => {
         windows["widget"].webContents.send("refresh-task-list");
     }
     windows["taskEditor"].hide()
-    windows["Comp_Filter_Synch_Sched"].hide();
+    windows["Filter_Sync_Sched"].hide();
 })

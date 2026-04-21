@@ -1,5 +1,22 @@
 html, body {
     overflow: hidden;
+    height: 100%;
+    width: 100%;
+    margin: 0;
+}
+
+.common_container{
+    position: relative;
+    width: 90%;
+    height: 100%;
+    padding-top: 5px;
+    padding-bottom: 5px;
+
+}
+
+.pin-container{
+    display: flex;
+    justify-content: center;
 }
 
 .drag-enabled {
@@ -18,3 +35,18 @@ a,
 .task-scroll{
     -webkit-app-region: no-drag;
 }
+
+.bg{
+    overflow: hidden;
+    background-color: #F8F3E7;
+    background-image:
+            linear-gradient(rgba(102, 100, 91, 0.1) 1px, transparent 1px),
+            linear-gradient(to right, rgba(102, 100, 91, 0.1) 1px, #F8F3E7 1px);
+    background-size: 20px 20px;
+    border-radius: 20px;
+    height: 100%;
+    width: 100%;
+}
+
+/*buttons and so on below here*/
+/*...*/

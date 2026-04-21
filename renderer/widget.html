@@ -3,92 +3,111 @@
 <head>
     <meta charset="UTF-8">
 
+    <meta
+            http-equiv="Content-Security-Policy"
+            content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline';"
+    />
+
     <link rel="stylesheet" href="../dist/output.css">
-
     <link rel="stylesheet" href="widget_style.css">
-
 </head>
 
-<body class="bg-cream flex justify-center items-start p-6 drag-enabled ">
+<body class="drag-enabled flex items-center">
 
-    <div class="widget w-[340px] flex flex-col gap-4">
-        <button
-                id="widget-pin"
-                class="widget-pin
-                    absolute
-                    top-3
-                    left-1/2
-                    -translate-x-1/2
-                    -translate-y-1/2
-                    w-[15px]
-                    h-[15px]
-                    rounded-full
-                    border
-                    border-roseSoft
-                    bg-white
-                    shadow
-                    transition
-                    duration-200
-                    hover:scale-110
-                    z-20">
-        </button>
+<div class="bg flex justify-center items-center">
+
+    <div class="common_container flex flex-col gap-4 ">
+        <!-- drag toggle -->
+        <div class="pin-container relative">
+            <button
+                    id="widget-pin"
+                    class="
+                        border
+                        rounded-full
+                        w-[15px] h-[15px]
+                        border-roseSoft
+                        bg-black
+                        transition
+                        duration-200
+                        hover:scale-110
+                    "
+            >
+            </button>
+        </div>
         <!-- LOTTIE AREA -->
-        <div class="widget-animation
-            h-[160px]
-            rounded-2xl
-            border
-            border-roseSoft
-            bg-white/70
-            backdrop-blur
-            flex items-center justify-center">
+        <div
+                class="
+                    widget-animation
+                    h-[160px]
+                    rounded-2xl
+                    border-roseSoft
+                    bg-white/70
+                    backdrop-blur
+                    flex items-center justify-center relative">
 
             <span class="text-xs text-ink/50">Lottie animation</span>
-
         </div>
-
-
         <!-- TOP BUTTONS -->
-        <div class="widget-buttons flex items-center gap-6">
-
+        <div class="widget-buttons flex items-start gap-6 relative">
             <!-- LOGS -->
             <button
-                    class="logs-btn
-    w-[60px]
-    h-[60px]
-    rounded-xl
-    border
-    border-roseSoft
-    bg-white/70
-    transition
-    duration-200
-    hover:scale-110
-    flex items-center justify-center"
+                    class="
+                        logs-btn
+                        w-[60px]
+                        h-[60px]
+                        rounded-xl
+                        border
+                        border-roseSoft
+                        bg-white/70
+                        transition
+                        duration-200
+                        hover:scale-110
+                        flex items-center justify-center
+                    "
                     onclick="window.api.openWindow('logs')"
             >
             </button>
 
-
             <!-- EDITOR -->
-            <button id="new-task-btn"
-                    class="editor-btn w-[64px] h-[64px] rounded-full border border-roseSoft bg-white/70 transition duration-200 hover:scale-110 flex items-center justify-center"  >
+            <button
+                    id="new-task-btn"
+                    class="
+                        editor-btn
+                        w-[64px]
+                        h-[64px]
+                        rounded-full
+                        border
+                        border-roseSoft
+                        bg-white/70
+                        transition
+                        duration-200
+                        hover:scale-110
+                        flex items-center justify-center
+                    "
+            >
             </button>
 
         </div>
-
-
         <!-- TASK LIST -->
         <div class="task-container relative">
+
             <!-- fade bottom -->
-            <div class="pointer-events-none absolute bottom-0 left-0 right-2 h-6 bg-gradient-to-t from-cream to-transparent z-10"></div>
+            <div
+                    class="pointer-events-none absolute bottom-0 left-0 right-2 h-6 bg-gradient-to-t from-cream to-transparent z-10"
+            ></div>
 
-            <div id="task-list-widget" class="task-scroll h-[260px] overflow-y-auto flex flex-col gap-3 pr-2">
-
+            <div
+                    id="task-list-widget"
+                    class="task-scroll h-[260px] overflow-y-auto flex flex-col gap-3 pr-2"
+            >
                 <!-- TASK ITEM -->
-
             </div>
-        </div></div>
-    </div>
 
-    <script src="Widget_ui.js"></script>
+        </div>
+
+    </div>
+</div>
+
+<script src="Widget_ui.js"></script>
 </body>
 </html>
