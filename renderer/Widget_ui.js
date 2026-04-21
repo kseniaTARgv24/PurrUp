@@ -1,4 +1,13 @@
 var api = window.api;
+// import lottie from 'lottie-web';
+//
+// lottie.loadAnimation({
+//     container: document.getElementById('lottie'),
+//     renderer: 'svg',
+//     loop: true,
+//     autoplay: true,
+//     path: 'renderer/img/widjetUI/cat2/data.json'
+// });
 
 window.addEventListener("DOMContentLoaded", async () => {
 

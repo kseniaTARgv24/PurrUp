@@ -17,7 +17,9 @@
     "tailwindcss": "^3.4.17"
   },
   "dependencies": {
+    "@lottiefiles/lottie-player": "^2.0.12",
     "@tailwindcss/vite": "^4.2.1",
+    "lottie-web": "^5.13.0",
     "uuid": "^13.0.0"
   }
 }
