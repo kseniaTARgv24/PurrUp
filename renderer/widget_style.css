@@ -50,3 +50,24 @@ a,
 
 /*buttons and so on below here*/
 /*...*/
+
+.drag-pin{
+    background-image: url("img/widjetUI/drag pin/toggle drag off.png");
+    background-size: 15px 15px;
+}
+
+.task-start{
+    background-image: url("img/widjetUI/task-start/Group 16.png");
+    background-size: 36px 36px;
+}
+
+.logs-btn{
+    background-image: url("img/widjetUI/logs/logs.png");
+    background-size: 60px 60px;
+}
+
+/* new task */
+.editor-btn{
+    background-image: url("img/widjetUI/new task/Group 17.png");
+    background-size: 64px 64px;
+}
