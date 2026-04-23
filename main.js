@@ -470,3 +470,15 @@ ipcMain.handle("delete-task", async (event, taskId) => {
     windows["taskEditor"].hide()
     windows["Filter_Sync_Sched"].hide();
 })
+
+ipcMain.handle("is-there-active-task", async () => {
+    const taskList = await getTaskList();
+    for (const task of taskList) {
+        let dbFile = await get_bd_file_by_id(task.id)
+        let scheduleSettings = await BackupEngine.get_schedule_settings_fromDB(dbFile);
+        if (scheduleSettings.enabled) {
+            return true
+        }
+    }
+    return false
+})

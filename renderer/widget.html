@@ -9,8 +9,7 @@
     />
 
     <link rel="stylesheet" href="../dist/output.css">
-    <link rel="stylesheet" href="widget_style.css">
-
+    <link rel="stylesheet" href="styles/widget_style.css">
 
 </head>
 
@@ -25,11 +24,7 @@
                     id="widget-pin"
                     class="
                         drag-pin
-                        border
-                        rounded-full
                         w-[15px] h-[15px]
-                        border-roseSoft
-                        bg-black
                         transition
                         duration-200
                         hover:scale-110
@@ -40,11 +35,10 @@
         <!-- LOTTIE AREA -->
         <div
                 class="
+                lottie-container
+                overflow-hidden
                 widget-animation
                 h-[160px]
-                rounded-2xl
-                border-roseSoft
-                bg-white/70
                 backdrop-blur
                 flex items-center justify-center relative">
 
@@ -52,7 +46,7 @@
 
         </div>
         <!-- TOP BUTTONS -->
-        <div class="widget-buttons flex items-start gap-6 relative">
+        <div class="widget-buttons gap-6 flex items-center justify-center relative">
             <!-- LOGS -->
 <!--            <button-->
 <!--                    class="-->
@@ -77,16 +71,9 @@
                     id="new-task-btn"
                     class="
                         editor-btn
-                        w-[64px]
-                        h-[64px]
-                        rounded-full
-                        border
-                        border-roseSoft
-                        bg-white/70
                         transition
                         duration-200
                         hover:scale-110
-                        flex items-center justify-center
                     "
             >
             </button>
@@ -112,6 +99,7 @@
     </div>
 </div>
 
-<script src="Widget_ui.js"></script>
+<script src="js/lottie.min.js"></script>
+<script src="js/Widget_ui.js"></script>
 </body>
 </html>

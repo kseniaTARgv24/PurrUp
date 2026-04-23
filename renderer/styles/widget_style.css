@@ -52,22 +52,43 @@ a,
 /*...*/
 
 .drag-pin{
-    background-image: url("img/widjetUI/drag pin/toggle drag off.png");
+    /*background-image: url("../assets/widjetUI/drag pin/toggle drag off.png");*/
     background-size: 15px 15px;
 }
 
 .task-start{
-    background-image: url("img/widjetUI/task-start/Group 16.png");
+    background-image: url("../assets/widjetUI/start.png");
     background-size: 36px 36px;
-}
-
-.logs-btn{
-    background-image: url("img/widjetUI/logs/logs.png");
-    background-size: 60px 60px;
+    width: 36px;
+    height: 36px;
 }
 
 /* new task */
 .editor-btn{
-    background-image: url("img/widjetUI/new task/Group 17.png");
+    background-image: url("../assets/widjetUI/new_task.png");
     background-size: 64px 64px;
+    width: 64px;
+    height: 64px;
+}
+
+.task-item{
+    border-radius: 20px;
+    background-color: white;
+    /*border-color: #241B1B;*/
+    /*border-width: 2px;*/
+
+}
+.task-item:hover{
+    background-color: mistyrose;
+}
+
+.lottie-container{
+    background-color: white;
+    border-radius: 20px;
+    background-image: url("../assets/widjetUI/cat_bg.png");
+    background-size: 100% 100%;
+    /*border-color: #241B1B;*/
+    /*border-width: 2px;*/
+    /*border-roseSoft*/
+    /*bg-white/70*/
 }

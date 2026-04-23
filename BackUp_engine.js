@@ -581,10 +581,9 @@ async function save_updateTaskInDB(taskId, taskName, dir1, dir2, delete_file_met
     const targetFolder = dir2;
     const dbFilePath = path.join(targetFolder, DB_FILE_NAME);
 
-    // Normalize input paths
     const folders = [normalize(dir1), normalize(dir2)];
     const normVersioningFolder = versioning_folder ? normalize(versioning_folder) : null;
-    // Prepare filters; always exclude the settings file from sync
+
     const include = (filter_settings && Array.isArray(filter_settings.include)) ? filter_settings.include : [];
     const exclude = (filter_settings && Array.isArray(filter_settings.exclude)) ? filter_settings.exclude : [];
     // const excludeRaw = (filter_settings && Array.isArray(filter_settings.exclude)) ? filter_settings.exclude : [];

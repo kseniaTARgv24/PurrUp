@@ -28,6 +28,7 @@ contextBridge.exposeInMainWorld("api", {
     removeConfigFileFromFolder: (DBFile) => ipcRenderer.invoke("remove-config-fileFromFolder", DBFile),
     checkPathExists: (p) => ipcRenderer.invoke("check-path-exists", p),
     deleteTask: (taskId) => ipcRenderer.invoke("delete-task", taskId),
+    isThereActiveTask: (taskId) => ipcRenderer.invoke("is-there-active-task"),
 
     onRefreshDraftUI: (callback) => ipcRenderer.on("refresh-draft-ui", callback),
     onRefreshTaskList: (callback) => ipcRenderer.on("refresh-task-list", callback),
