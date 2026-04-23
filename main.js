@@ -17,7 +17,7 @@ let currentTaskDraft ={
     filter_settings: {},
     schedule_settings: {}
 }
-const TaskListPath = path.join(process.cwd(), "data", "tasks_list.json");
+let TaskListPath;
 
 function createWindow(name, file, options = {}) {
     windows[name] = new BrowserWindow({
@@ -222,7 +222,12 @@ async function toggleSchedule(enabled, taskId) {
     );
 }
 
+async function initPaths() {
+    TaskListPath = await BackupEngine.saveOpenTaksListFile();
+}
+
 async function getTaskList() {
+    await initPaths()
     try {
         const raw = await fs.readFile(TaskListPath, "utf8");
         const parsed = JSON.parse(raw);

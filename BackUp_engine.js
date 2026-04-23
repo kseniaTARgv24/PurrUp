@@ -1,18 +1,10 @@
 const path = require("path");
+const { app } = require("electron");
 const fs = require("fs");
 const fsp = require("fs/promises");
 const { join, resolve, basename } = path;
 const { v4: uuidv4 } = require("uuid");
 const {homedir} = require("node:os");
-
-// import path from "node:path";
-// import fs from "node:fs";
-// import fsp from "node:fs/promises";
-// import os from "node:os";
-// import { v4 as uuidv4 } from "uuid";
-//
-// const { join, resolve, basename } = path;
-// const { homedir } = os;
 
 ////////////////// Main funcs ///////////////
 
@@ -526,7 +518,7 @@ async function isSyncAllowed(scheduleSettings, last_sync, DBFile) {
 }
 
 async function saveTaskInTaskList(taskId, taskName, configFilePath) { //todo rename to saveUpdate...
-    const TaskListPath = path.join(process.cwd(), "data", "tasks_list.json");
+    const TaskListPath = await saveOpenTaksListFile();
 
     let taskListData = { tasks: [] };
     if (fs.existsSync(TaskListPath)) {
@@ -561,7 +553,7 @@ async function saveTaskInTaskList(taskId, taskName, configFilePath) { //todo ren
 }
 
 async function removeTaskFromTaskList(taskId){
-    const TaskListPath = path.join(process.cwd(), "data", "tasks_list.json");
+    const TaskListPath = await saveOpenTaksListFile();
     const raw = fs.readFileSync(TaskListPath, "utf-8");
     let taskListData = JSON.parse(raw);
     if (!Array.isArray(taskListData.tasks)) taskListData.tasks = []
@@ -901,7 +893,7 @@ async function get_last_sync_fromDB(DBFile) {
 
 async function get_task_name_by_id(taskId){
     let taskListData =[]
-    const TaskListPath = path.join(process.cwd(), "data", "tasks_list.json");
+    const TaskListPath = await saveOpenTaksListFile();
     const raw = fs.readFileSync(TaskListPath, "utf-8");
     taskListData = JSON.parse(raw);
     const task = taskListData.tasks.find(t => t.id === taskId);
@@ -910,7 +902,7 @@ async function get_task_name_by_id(taskId){
 }
 
 async function get_bd_file_by_id(taskId) {
-    const TaskListPath = path.join(process.cwd(), "data", "tasks_list.json");
+    const TaskListPath = await saveOpenTaksListFile();
 
     const raw = fs.readFileSync(TaskListPath, "utf-8");
     const taskListData = JSON.parse(raw);
@@ -1163,6 +1155,22 @@ async function update_last_sync(DBFile, timestamp = Date.now()) {
     }
 }
 
+async function saveOpenTaksListFile() {
+    const appDataPath = app.getPath("appData");
+    const appFolder = path.join(appDataPath, "purrup", "data");
+    const TaskListPath = path.join(appFolder, "tasks_list.json");
+
+    await fsp.mkdir(appFolder, { recursive: true });
+
+    try {
+        await fsp.access(TaskListPath);
+    } catch {
+        await fsp.writeFile(TaskListPath, JSON.stringify([]));
+    }
+
+    return TaskListPath;
+}
+
 ////////////////////////////// exporting ////////////////////////////
 module.exports = {
     compareDirs,
@@ -1182,7 +1190,8 @@ module.exports = {
     isSyncAllowed,
     update_last_sync,
     saveTaskInTaskList,
-    removeConfigFileFromFolder
+    removeConfigFileFromFolder,
+    saveOpenTaksListFile
 };
 
 

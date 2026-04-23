@@ -29,6 +29,7 @@ contextBridge.exposeInMainWorld("api", {
     checkPathExists: (p) => ipcRenderer.invoke("check-path-exists", p),
     deleteTask: (taskId) => ipcRenderer.invoke("delete-task", taskId),
     isThereActiveTask: (taskId) => ipcRenderer.invoke("is-there-active-task"),
+    saveOpenTaksListFile: () => ipcRenderer.invoke("save-open-tasks-list-file"),
 
     onRefreshDraftUI: (callback) => ipcRenderer.on("refresh-draft-ui", callback),
     onRefreshTaskList: (callback) => ipcRenderer.on("refresh-task-list", callback),
