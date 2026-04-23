@@ -26,9 +26,12 @@
   },
   "build": {
     "appId": "com.purrup.app",
-    "productName": "PurrUp",
+    "productName": "PurrUp_Ver1",
     "directories": {
       "output": "dist"
+    },
+    "win": {
+      "icon": "build/icon.ico"
     },
     "files": [
       "**/*"
