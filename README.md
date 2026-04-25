@@ -34,7 +34,16 @@ It is designed to provide a simple but visually appealing way to compare folders
 ```text
 PurrUp/
 ├── data/
-└── renderer/
-    ├── assets/ widjetUI/
-    ├── js/
-    └── styles/
+├── renderer/
+│   ├── assets/ widjetUI/
+│   ├── js/
+│   └── styles/
+├── .gitignore
+├── BackUp_engine.js
+├── README.md
+├── main.js
+├── package-lock.json
+├── package.json
+├── preload.js
+├── styles.css
+└── tailwind.config.js
