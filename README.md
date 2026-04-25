@@ -33,6 +33,7 @@ It is designed to provide a simple but visually appealing way to compare folders
 
 ```text
 PurrUp/
+├── .idea/
 ├── data/
 ├── renderer/
 │   ├── assets/ widjetUI/
