@@ -34,16 +34,7 @@ It is designed to provide a simple but visually appealing way to compare folders
 ```text
 PurrUp/
 ├── data/
-├── renderer/
-│   ├── widget.html
-│   ├── taskEditor.html
-│   ├── Filter_Sync_Sched.html
-│   ├── Widget_ui.js
-│   ├── TaskEditor_ui.js
-│   ├── FSS_ui.js
-│   └── styles / assets
-├── BackUp_engine.js
-├── main.js
-├── preload.js
-├── package.json
-└── tailwind.config.js
+└── renderer/
+    ├── assets/ widjetUI/
+    ├── js/
+    └── styles/
