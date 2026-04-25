@@ -36,7 +36,8 @@ PurrUp/
 ├── .idea/
 ├── data/
 ├── renderer/
-│   ├── assets/ widjetUI/
+│   ├── assets/
+│   │   └── widjetUI/
 │   ├── js/
 │   └── styles/
 ├── .gitignore
