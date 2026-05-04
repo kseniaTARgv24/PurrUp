@@ -1,0 +1,94 @@
+html, body {
+    overflow: hidden;
+    height: 100%;
+    width: 100%;
+    margin: 0;
+}
+
+.common_container{
+    position: relative;
+    width: 90%;
+    height: 100%;
+    padding-top: 5px;
+    padding-bottom: 5px;
+
+}
+
+.pin-container{
+    display: flex;
+    justify-content: center;
+}
+
+.drag-enabled {
+    -webkit-app-region: drag;
+}
+
+.no-drag {
+    -webkit-app-region: no-drag;
+}
+
+button,
+input,
+textarea,
+select,
+a,
+.task-scroll{
+    -webkit-app-region: no-drag;
+}
+
+.bg{
+    overflow: hidden;
+    background-color: #F8F3E7;
+    background-image:
+            linear-gradient(rgba(102, 100, 91, 0.1) 1px, transparent 1px),
+            linear-gradient(to right, rgba(102, 100, 91, 0.1) 1px, #F8F3E7 1px);
+    background-size: 20px 20px;
+    border-radius: 20px;
+    height: 100%;
+    width: 100%;
+}
+
+/*buttons and so on below here*/
+/*...*/
+
+.drag-pin{
+    /*background-image: url("../assets/widjetUI/drag pin/toggle drag off.png");*/
+    background-size: 15px 15px;
+}
+
+.task-start{
+    background-image: url("../assets/widjetUI/start.png");
+    background-size: 36px 36px;
+    width: 36px;
+    height: 36px;
+}
+
+/* new task */
+.editor-btn{
+    background-image: url("../assets/widjetUI/new_task.png");
+    background-size: 64px 64px;
+    width: 64px;
+    height: 64px;
+}
+
+.task-item{
+    border-radius: 20px;
+    background-color: white;
+    /*border-color: #241B1B;*/
+    /*border-width: 2px;*/
+
+}
+.task-item:hover{
+    background-color: mistyrose;
+}
+
+.lottie-container{
+    background-color: white;
+    border-radius: 20px;
+    background-image: url("../assets/widjetUI/cat_bg.png");
+    background-size: 100% 100%;
+    /*border-color: #241B1B;*/
+    /*border-width: 2px;*/
+    /*border-roseSoft*/
+    /*bg-white/70*/
+}

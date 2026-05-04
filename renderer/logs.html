@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8" />
+    <title>Logs</title>
+
+    <meta
+            http-equiv="Content-Security-Policy"
+            content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline';"
+    />
+
+    <link rel="stylesheet" href="styles/widget_style.css" />
+</head>
+<body class="app-window">
+
+<div class="window-header">
+    <h2>Logs</h2>
+</div>
+
+<div class="window-content">
+    <div class="logs-list">
+        <!-- Логи будут подгружаться сюда -->
+        <div class="log-entry">No logs yet</div>
+    </div>
+</div>
+
+<div class="ffs-row">
+    <label><input type="checkbox"> Change log folder</label>
+    <input class="ffs-input" placeholder="Log path">
+</div>
+
+<div class="ffs-row">
+    <span>Run a command:</span>
+    <select>
+        <option>On completion</option>
+    </select>
+    <input class="ffs-input" placeholder="shutdown /s /t 60">
+</div>
+
+<div class="window-footer">
+    <button>Close</button>
+</div>
+
+</body>
+</html>
