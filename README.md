@@ -3,7 +3,7 @@
 PurrUp is a desktop backup application built with Electron and JavaScript.  
 It is designed to provide a simple but visually appealing way to compare folders, create backup tasks, configure synchronization settings, and run backups manually or on a schedule.
 
-[![Watch the video](https://img.youtube.com/vi/ICEtIQ3YAfE/maxresdefault.jpg)](https://youtu.be/ICEtIQ3YAfE)
+[![Watch](https://img.youtube.com/vi/ICEtIQ3YAfE/0.jpg)](https://youtu.be/ICEtIQ3YAfE)
 
 ## Main features
 
